@@ -1,14 +1,10 @@
 # bust-a-bloq
 
-This template should help get you started developing with Vue 3 in Vite.
+Reverse engineering del famoso gioco per telefone Block Blast, con aggiunta di interessanti feature.
 
 ## Recommended IDE Setup
 
 [VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
-
-## Customize configuration
-
-See [Vite Configuration Reference](https://vite.dev/config/).
 
 ## Project Setup
 
