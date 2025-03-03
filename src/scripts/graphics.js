@@ -18,7 +18,9 @@ export class PixiGame {
         this.FIELD_CORNER_RADIUS = 10;
         this.FIELD_BORDER_STROKE_WIDTH = 15;
         this.FIELD_X = this.CENTER_X - this.FIELD_BORDER_WIDTH / 2;
-        this.FIELD_Y = this.CENTER_Y - this.FIELD_BORDER_WIDTH / 2;
+        this.FIELD_Y = this.CENTER_Y - this.FIELD_BORDER_HEIGHT / 2;
+        this.NEXT_PIECES_Y = this.FIELD_Y + this.FIELD_BORDER_HEIGHT;
+        this.NEXT_PIECES_DISTANCE = 20;
 
         this.BLOCK_TEXTURE_BASE_PATH = '/src/assets/textures/block/';
         this.BLOCK_COLORS_NUMBER = 7;
@@ -53,7 +55,8 @@ export class PixiGame {
         for (let r = 0; r < this.gameStore.field.length; r++) {
             for (let c = 0; c < this.gameStore.field[r].length; c++) {
                 if (this.gameStore.field[r][c] != 0) {
-                    let block = Sprite.from(Assets.get('block' + (this.gameStore.field[r][c] - 1)));
+                    const texture = Assets.get('block' + (this.gameStore.field[r][c] - 1));
+                    const block = Sprite.from(texture);
                     block.x = c * this.BLOCK_SIDE + this.FIELD_X + this.FIELD_BORDER_STROKE_WIDTH;
                     block.y = r * this.BLOCK_SIDE + this.FIELD_Y + this.FIELD_BORDER_STROKE_WIDTH;
                     block.width = block.height = this.BLOCK_SIDE;
@@ -100,9 +103,41 @@ export class PixiGame {
         this.app.stage.addChild(titleText);
 
         this.app.stage.addChild(this.getFieldGraphic());
+
+        this.drawNextPieces();
     }
 
     destroy() {
         this.app.destroy(true, { children: true, texture: true });
+    }
+
+    drawNextPieces() {
+        for (let p = 0; p < this.gameStore.nextPieces.length; p++) {
+            const container = new Container();
+            container.x = this.FIELD_X;
+            container.y = this.NEXT_PIECES_Y;
+
+            const piece = this.gameStore.nextPieces[p];
+            const texture = Assets.get(Math.floor(Math.random() * this.BLOCK_COLORS_NUMBER));
+            let currentWidth = 0;
+
+            for (let r = 0; r < piece.length; r++) {
+                for (let c = 0; c < piece[r].length; c++) {
+                    if (piece[r][c] = 0) {
+                        const block = Sprite.from(texture);
+                        const pieceWidth = this.BLOCK_SIDE * piece[r].length;
+                        block.x = currentWidth + this.NEXT_PIECES_DISTANCE;
+                        block.y = 0;
+                        currentWidth += pieceWidth + this.NEXT_PIECES_DISTANCE;
+
+                        console.log(`Created next block piece`);
+
+                        container.addChild(block);
+                    }
+                }
+            }
+
+            this.app.stage.addChild(container);
+        }
     }
 }

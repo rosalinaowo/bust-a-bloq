@@ -45,7 +45,11 @@ export const useGameStore = defineStore('game', () => {
     function getRandomPieces() {
         nextPieces.value = Array.from({ length: nextPiecesAmount.value }, () => {
             const idx = Math.floor(Math.random() * blocks.value.length);
+            console.log('Got block ' + idx);
+            console.log(blocks.value[idx]);
+            console.log(blocks.value);
             return blocks.value[idx];
+            //return JSON.parse(JSON.stringify(blocks.value[idx]));
         });
     }
 

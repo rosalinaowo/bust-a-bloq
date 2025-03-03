@@ -25,3 +25,16 @@
 - **Partite private:** Possibilità di creare lobby personalizzate per partite organizzate con amici oppure tornei.
 - **Inviti alle partite:** Si possono invitare altri giocatori ad una lobby tramite un codice/link.
 - **Pelli per i blocchi:** Capacità di sbloccare nuovi aspetti per i blocchi ed il campo di gioco aumentando di livello.
+
+## Descrizione gioco
+*Inserire screenshot del gioco (quando abbiamo implementato il campo)*
+
+### In cosa consiste il gioco?
+*Inserire qui nome gioco in WIP* è un gioco che consiste nell'eliminare il maggior numero di blocchi possibile dal campo di gioco senza rimanere senza spazio per inserirne di nuovi.
+
+### Come si eliminano i blocchi?
+Per distruggere i vari blocchi dal campo di gioco, bisogna formare una linea (Orizzontale o verticale) di blocchi che vada da un lato all'altro del campo. Fare ciò distruggerà tutti i blocchi appartenenti a quella linea. In caso si elimini più di una linea con un blocco solo si accumuleranno punti extra.
+
+### Che tipologie di blocchi esistono?
+Al contrario di altre tipologie di giochi simile (*es. Tetris*), i blocchi di (*Inserire WIP*) non sono generati in maniera casuale, ma vengono invece adattati per permettere sempre al giocatore di avanzare nella partita se è in grado di individuare la combinazione di blocchi giusta per proseguire. I blocchi sono di svariate forme e non sono limitati ad uno specifico numero di quadretti.
+
