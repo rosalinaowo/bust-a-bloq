@@ -1,6 +1,8 @@
 # bust-a-bloq
 
-Reverse engineering del famoso gioco per telefone Block Blast, con aggiunta di interessanti feature.
+Reverse engineering del famoso gioco per telefono Block Blast, con aggiunta di interessanti feature.
+
+### Documentazione in [DOCS.md](./DOCS.md)
 
 ## Recommended IDE Setup
 

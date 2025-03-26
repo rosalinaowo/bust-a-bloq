@@ -1,5 +1,6 @@
-import { Application, Assets, Container, FillGradient, Graphics, GraphicsContext, Sprite, Text, TextStyle, TilingSprite } from "pixi.js";
+import { Application, Assets, Container, FillGradient, Graphics, GraphicsContext, nextPow2, Sprite, Text, TextStyle, TilingSprite } from "pixi.js";
 import { useGameStore } from "@/stores/game";
+import { toRawArray } from "@/scripts/utils";
 
 export class PixiGame {
     constructor(htmlContainer) {
@@ -104,7 +105,7 @@ export class PixiGame {
 
         this.app.stage.addChild(this.getFieldGraphic());
 
-        this.drawNextPieces();
+        this.app.stage.addChild(this.drawNextPieces());
     }
 
     destroy() {
@@ -112,14 +113,21 @@ export class PixiGame {
     }
 
     drawNextPieces() {
+        console.dir(this.gameStore.nextPieces);
+        console.log(`Length: ${this.gameStore.nextPieces.length}`);
+
         for (let p = 0; p < this.gameStore.nextPieces.length; p++) {
             const container = new Container();
             container.x = this.FIELD_X;
             container.y = this.NEXT_PIECES_Y;
 
-            const piece = this.gameStore.nextPieces[p];
+            const piece = toRawArray(this.gameStore.nextPieces[p]);
             const texture = Assets.get(Math.floor(Math.random() * this.BLOCK_COLORS_NUMBER));
             let currentWidth = 0;
+
+            console.log(`Current piece: ${Array.isArray(piece)} ${piece.length}`);
+            console.dir(piece);
+            
 
             for (let r = 0; r < piece.length; r++) {
                 for (let c = 0; c < piece[r].length; c++) {
@@ -137,7 +145,7 @@ export class PixiGame {
                 }
             }
 
-            this.app.stage.addChild(container);
+            return container;
         }
     }
 }

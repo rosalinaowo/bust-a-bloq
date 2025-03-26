@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 import { reactive, ref } from "vue";
 
+// Campo di gioco di esempio
 const exampleGame = {
     "field": [
         [ 1, 1, 1, 0, 0, 0, 6, 6 ],
@@ -14,6 +15,7 @@ const exampleGame = {
     ]
 }
 
+// Creaiamo ed esportiamo uno store, lo usamio per gestire lo stato dell'app
 export const useGameStore = defineStore('game', () => {
     const blocks = ref([
         [[1, 1]], // 2x1
@@ -45,11 +47,10 @@ export const useGameStore = defineStore('game', () => {
     function getRandomPieces() {
         nextPieces.value = Array.from({ length: nextPiecesAmount.value }, () => {
             const idx = Math.floor(Math.random() * blocks.value.length);
-            console.log('Got block ' + idx);
-            console.log(blocks.value[idx]);
-            console.log(blocks.value);
-            return blocks.value[idx];
-            //return JSON.parse(JSON.stringify(blocks.value[idx]));
+            const selectedBlock = blocks.value[idx];
+            const blockCopy = {...selectedBlock};
+
+            return blockCopy;
         });
     }
 
