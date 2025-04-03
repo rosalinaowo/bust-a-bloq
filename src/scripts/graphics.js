@@ -10,7 +10,7 @@ export class PixiGame {
         this.gameStore.getRandomPieces();
         //console.dir(this.gameStore.nextPieces);
 
-        this.WIDTH = 600;
+        this.WIDTH = 800;
         this.HEIGHT = 800;
         this.CENTER_X = this.WIDTH / 2;
         this.CENTER_Y = this.HEIGHT / 2;
@@ -28,7 +28,7 @@ export class PixiGame {
         this.BLOCK_TEXTURE_PATHS = Array.from({ length: this.BLOCK_COLORS_NUMBER }, (_, i) => `${this.BLOCK_TEXTURE_BASE_PATH}block${i + 1}.png`);
         this.BLOCK_SIDE = 50;
 
-        let dragTarget = null;
+        this.dragTarget = null;
 
         this.app = new Application();
 
@@ -78,8 +78,8 @@ export class PixiGame {
 
         await this.app.init({
             background: '#0d2154',
-            width: 600,
-            height: 800,
+            width: this.WIDTH,
+            height: this.HEIGHT,
             antialias: true,
             autoDensity: true,
             resolution: 1,
@@ -131,14 +131,18 @@ export class PixiGame {
             pieceContainer.x = lastPieceWidth;
             pieceContainer.y = 0;
 
+            pieceContainer.eventMode = 'static'
             pieceContainer.cursor = 'pointer';
-            pieceContainer.on('pointerdown', this.onDragStart, pieceContainer);
+            pieceContainer.on('pointerdown', (event) => this.onDragStart(event, pieceContainer));
+            this.app.stage.on('pointerup', (event) => this.onDragEnd(event));
+            this.app.stage.on('pointerupoutside', (event) => this.onDragEnd(event));
+
 
             const piece = toRawArray(this.gameStore.nextPieces[p]);
             const textureColor = Math.floor(Math.random() * this.BLOCK_COLORS_NUMBER);
             const texture = Assets.get('block' + textureColor);
 
-            console.log(`Current piece: ${Array.isArray(piece)} ${piece.length}, color: ${textureColor}`);
+            //console.log(`Current piece: ${Array.isArray(piece)} ${piece.length}, color: ${textureColor}`);
             
             for (let r = 0; r < piece.length; r++) {
                 let lastBlockX = 0;
@@ -164,6 +168,9 @@ export class PixiGame {
             let x = new Text({ text: 'x', style: { fontSize: 16, fill: 0xff0000}});
             pieceContainer.addChild(x);
 
+            //pieceContainer.x = lastPieceWidth + pieceContainer.width / 2;
+            //pieceContainer.y = 0 + pieceContainer.height / 2;
+            pieceContainer.pivot.set(pieceContainer.width / 2, pieceContainer.height / 2);
             container.addChild(pieceContainer);
         }
 
@@ -171,14 +178,21 @@ export class PixiGame {
     }
 
     onDragMove(event) {
-        
+        if (this.dragTarget) {
+            this.dragTarget.parent.toLocal(event.global, null, this.dragTarget.position);
+        }
     }
 
-    onDragStart() {
-        console.log('DRAGGINGGGGGGGGGG')
+    onDragStart(event, piece) {
+        this.dragTarget = piece;  // Store reference to the dragged piece
+        this.app.stage.on('pointermove', this.onDragMove, this);
     }
+    
 
     onDragEnd() {
-
+        if (this.dragTarget) {
+            this.app.stage.off('pointermove', this.onDragMove);
+            this.dragTarget = null;
+        }
     }
 }
