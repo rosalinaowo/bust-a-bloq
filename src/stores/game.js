@@ -54,5 +54,52 @@ export const useGameStore = defineStore('game', () => {
         });
     }
 
+    function isLineCleared() {
+        let arrayRighe = [[]];
+        let arrayColonne = [[]];
+
+        for (let i = 0; i < rows; i++) { //Controlla ogni riga
+            for (let j = 0; j < columns; j++) {//Controlla ogni colonna
+                if(field.value[i][j] != 0) {//Controlla appena trova un 1 se ci sono righe/colonne da eliminare
+                    for(let idxRiga = 0; idxRiga < rows; idxRiga++){
+                        if(field.value[idxRiga][j] == 0){
+                            break
+                        }
+                        else {
+                            if(idxRiga == rows - 1) {
+                                arrayColonne.push(j)
+                            }
+                        }   
+                    }
+
+                    for(let idxColonna = 0; idxColonna < columns; idxColonna++) {
+                        if(field.value[i][idxColonna] == 0) {
+                            break
+                        }
+                        else {
+                            if(idxColonna == columns - 1) {
+                                arrayRighe.push(i)
+                            }
+                        }   
+                    }
+                }
+            }
+            deleteRowOrColumn(arrayRighe, arrayColonne);
+        }
+    }
+
+    function deleteRowOrColumn(righe, colonne){
+        for(let nrColonne = 0; nrColonne < colonne.length; nrColonne++) {
+            for(let i = 0; i < rows; i++) {
+                    field.value[i][colonne] = 0
+                }
+        }
+        for(let nrRighe = 0; nrRighe < righe.length; nrRighe++) {
+                for(let i = 0; i < rows; i++) {
+                        field.value[righe][i] = 0
+                    }
+            }
+    }   
+
     return { blocks, rows, columns, field, nextPieces, loadExampleGame, getRandomPieces }
 });
