@@ -23,7 +23,7 @@ export class PixiGame {
         this.NEXT_PIECES_Y = this.FIELD_Y + this.FIELD_BORDER_HEIGHT;
         this.NEXT_PIECES_DISTANCE = 20;
 
-        this.BLOCK_TEXTURE_BASE_PATH = '/src/assets/textures/block/';
+        this.BLOCK_TEXTURE_BASE_PATH = `/src/assets/textures/${this.gameStore.selectedTexturePack}/`;
         this.BLOCK_COLORS_NUMBER = 7;
         this.BLOCK_TEXTURE_PATHS = Array.from({ length: this.BLOCK_COLORS_NUMBER }, (_, i) => `${this.BLOCK_TEXTURE_BASE_PATH}block${i + 1}.png`);
         this.BLOCK_SIDE = 50;
