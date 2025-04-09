@@ -20,6 +20,7 @@ const gameStore = useGameStore();
         </div>
         -----------
       </div>
+      <button class="btn btn-primary" @click="gameStore.isLineCleared()">isLineCleared</button>
     </div>
   </div>
 </template>

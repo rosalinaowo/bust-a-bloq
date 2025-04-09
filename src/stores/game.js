@@ -1,9 +1,10 @@
 import { defineStore } from "pinia";
 import { reactive, ref } from "vue";
 
+// Campo di gioco di esempio
 const exampleGame = {
     "field": [
-        [ 1, 1, 1, 0, 0, 0, 6, 6 ],
+        [ 1, 1, 1, 1, 1, 1, 6, 6 ],
         [ 1, 3, 3, 0, 0, 0, 0, 6 ],
         [ 1, 0, 0, 0, 0, 0, 0, 0 ],
         [ 0, 0, 0, 0, 0, 0, 0, 0 ],
@@ -14,7 +15,11 @@ const exampleGame = {
     ]
 }
 
+// Creaiamo ed esportiamo uno store, lo usamio per gestire lo stato dell'app
 export const useGameStore = defineStore('game', () => {
+    const texturePacks = ref([ 'default', 'blockMC' ]);
+    const selectedTexturePack = texturePacks.value[1];
+
     const blocks = ref([
         [[1, 1]], // 2x1
         [[1, 1, 1]], // 3x1
@@ -45,11 +50,10 @@ export const useGameStore = defineStore('game', () => {
     function getRandomPieces() {
         nextPieces.value = Array.from({ length: nextPiecesAmount.value }, () => {
             const idx = Math.floor(Math.random() * blocks.value.length);
-            console.log('Got block ' + idx);
-            console.log(blocks.value[idx]);
-            console.log(blocks.value);
-            return blocks.value[idx];
-            //return JSON.parse(JSON.stringify(blocks.value[idx]));
+            const selectedBlock = blocks.value[idx];
+            const blockCopy = {...selectedBlock};
+
+            return blockCopy;
         });
     }
 
@@ -58,28 +62,27 @@ export const useGameStore = defineStore('game', () => {
         let arrayColonne = [[]];
 
         for (let i = 0; i < rows; i++) { //Controlla ogni riga
+            console.log('ciao');
             for (let j = 0; j < columns; j++) {//Controlla ogni colonna
                 if(field.value[i][j] != 0) {//Controlla appena trova un 1 se ci sono righe/colonne da eliminare
                     for(let idxRiga = 0; idxRiga < rows; idxRiga++){
                         if(field.value[idxRiga][j] == 0){
-                            break
+                            break;
                         }
                         else {
                             if(idxRiga == rows - 1) {
                                 arrayColonne.push(j)
                             }
-                        }   
+                        }
                     }
 
                     for(let idxColonna = 0; idxColonna < columns; idxColonna++) {
                         if(field.value[i][idxColonna] == 0) {
                             break
                         }
-                        else {
-                            if(idxColonna == columns - 1) {
-                                arrayRighe.push(i)
-                            }
-                        }   
+                        else if(idxColonna == columns - 1) {
+                            arrayRighe.push(i)
+                        }
                     }
                 }
             }
@@ -90,15 +93,28 @@ export const useGameStore = defineStore('game', () => {
     function deleteRowOrColumn(righe, colonne){
         for(let nrColonne = 0; nrColonne < colonne.length; nrColonne++) {
             for(let i = 0; i < rows; i++) {
-                    field.value[i][colonne] = 0
+                field.value[i][colonne] = 0
             }
         }
         for(let nrRighe = 0; nrRighe < righe.length; nrRighe++) {
-                for(let i = 0; i < rows; i++) {
-                        field.value[righe][i] = 0
-                }
+            for(let i = 0; i < rows; i++) {
+                field.value[righe][i] = 0
+            }
         }
-    }   
+    }
 
-    return { blocks, rows, columns, field, nextPieces, loadExampleGame, getRandomPieces }
+
+    return {
+        texturePacks,
+        selectedTexturePack,
+        blocks,
+        rows,
+        columns,
+        field,
+        nextPieces,
+        loadExampleGame,
+        getRandomPieces,
+        deleteRowOrColumn,
+        isLineCleared
+    }
 });
