@@ -1,5 +1,9 @@
 # Docs
 
+## Introduzione
+
+Questo documento fornisce una panoramica tecnica e stilista del progetto "Bust-a-Bloq", un applicativo sviluppato utilizzando Vue.js come framework e le capacità grafiche della libreria Javascript Pixi.js.
+
 ## Tecnologie utilizzate
 - Vue.js: framework HTML e Javascript usato per la creazione delle pagine web del sito
 - Pixi.js: libreria grafica Javascript usata per visualizzare il campo di gioco
@@ -8,6 +12,7 @@
 
 ## Feature programmate
 - [x] Campo di gioco
+- [ ] Menù principale
 - [ ] AI generazione blocchi
 - [ ] Multiplayer
 - [ ] Lista Amici
@@ -16,6 +21,10 @@
 - [ ] Pelli per i blocchi
 - [ ] Pagina about
 
+## Struttura del codice
+
+Il progetto è stato creato utilizzando l'architettura fornita da Vue.js, sfruttando sia componenti che view offerte dal framework stesso e, in aggiunta ad esse, usando un sistema di stores offerto da Pinia per gestire lo stato corrente della partita.
+Le texture dei vari blocchi di gioco sono salvate in locale, ma non è impossibile pensare ad un espansione futura con l'utilizzo di un database non-relazionale.
 
 ## Funzionalità
 - **Campo di gioco:** Il campo di gioco deve adattarsi alle dimensioni dello schermo.
@@ -37,4 +46,15 @@ Per distruggere i vari blocchi dal campo di gioco, bisogna formare una linea (Or
 
 ### Che tipologie di blocchi esistono?
 Al contrario di altre tipologie di giochi simile (*es. Tetris*), i blocchi di (*Inserire WIP*) non sono generati in maniera casuale, ma vengono invece adattati per permettere sempre al giocatore di avanzare nella partita se è in grado di individuare la combinazione di blocchi giusta per proseguire. I blocchi sono di svariate forme e non sono limitati ad uno specifico numero di quadretti.
+
+## Potenziali miglioramenti
+- Vorremmo che il gioco possa essere il più fluido e soddisfacente possibile, offrendo al giocatore delle animazioni fluide che possano miglioare l'esperienza del giocatore, fornendo informazioni chiare sullo stato della partità.
+
+- Classifiche online basate sulla regione di gioco e classifiche contenenti solo gli amici del giocatore, in modo da confrontare indirettamente i traguardi conseguiti durante le partite.
+
+- Possibilità di accesso utilizzando Social Media, per permettere un Login più veloce per iniziare a giocare subito con altre persone online, magari conservando alcune caratteristiche del profilo come la posizione in classifica e gli aspetti dei blocchi ottenuti.
+
+- Implementazione di un sistema di ricompense, ottenibili raggiungendo delle 'Milestones' segnate dal sistema di punteggio. Queste ricompense includono perlopiù gli aspetti dei blocchi.
+
+- Inserire opzioni per regolare il volume di effetti e musica del gioco in separazione.
 

@@ -91,13 +91,13 @@ export const useGameStore = defineStore('game', () => {
         for(let nrColonne = 0; nrColonne < colonne.length; nrColonne++) {
             for(let i = 0; i < rows; i++) {
                     field.value[i][colonne] = 0
-                }
+            }
         }
         for(let nrRighe = 0; nrRighe < righe.length; nrRighe++) {
                 for(let i = 0; i < rows; i++) {
                         field.value[righe][i] = 0
-                    }
-            }
+                }
+        }
     }   
 
     return { blocks, rows, columns, field, nextPieces, loadExampleGame, getRandomPieces }
