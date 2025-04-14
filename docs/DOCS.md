@@ -1,5 +1,7 @@
 # Docs
 
+*Romagnoli, Petrino - 5F ITT Blaise Pascal*
+
 ## Introduzione
 
 Questo documento fornisce una panoramica tecnica e stilista del progetto "Bust-a-Bloq", un applicativo sviluppato utilizzando Vue.js come framework e le capacità grafiche della libreria Javascript Pixi.js.
@@ -58,3 +60,7 @@ Al contrario di altre tipologie di giochi simile (*es. Tetris*), i blocchi di (*
 
 - Inserire opzioni per regolare il volume di effetti e musica del gioco in separazione.
 
+## Spiegazione codice
+
+- Creazione della pagina home, con l'inserimento del componente GameField (che visualizza il campo di gioco)
+![Home View code](./images/HomeView.jpeg "Home View code")

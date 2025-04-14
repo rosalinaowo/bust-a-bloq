@@ -32,6 +32,8 @@ export class PixiGame {
 
         this.app = new Application();
 
+        this.initMatPoints();
+
         this.init(htmlContainer);
     }
 
@@ -41,6 +43,19 @@ export class PixiGame {
         }
         
         return await Assets.load(Array.from({ length: this.BLOCK_COLORS_NUMBER }, (_, i) => 'block' + i));
+    }
+
+    initMatPoints() {
+        for (let r = 0; r < this.gameStore.field.length; r++) {
+            for (let c = 0; c < this.gameStore.field[r].length; c++) {
+                const p = new Sprite();
+                p.x = c * this.BLOCK_SIDE + this.FIELD_X + this.FIELD_BORDER_STROKE_WIDTH;
+                p.y = r * this.BLOCK_SIDE + this.FIELD_Y + this.FIELD_BORDER_STROKE_WIDTH;
+                p.width = p.height = this.BLOCK_SIDE;
+
+                this.gameStore.fieldSprites.value[r][c] = p;
+            }
+        }
     }
 
     getFieldGraphic() {
@@ -56,17 +71,16 @@ export class PixiGame {
         // Pieces
         for (let r = 0; r < this.gameStore.field.length; r++) {
             for (let c = 0; c < this.gameStore.field[r].length; c++) {
-                if (this.gameStore.field[r][c] != 0) {
-                    const texture = Assets.get('block' + (this.gameStore.field[r][c] - 1));
-                    const block = Sprite.from(texture);
-                    block.x = c * this.BLOCK_SIDE + this.FIELD_X + this.FIELD_BORDER_STROKE_WIDTH;
-                    block.y = r * this.BLOCK_SIDE + this.FIELD_Y + this.FIELD_BORDER_STROKE_WIDTH;
-                    block.width = block.height = this.BLOCK_SIDE;
+                const texture = Assets.get('block' + (this.gameStore.field[r][c] - 1));
+                const block = Sprite.from(texture);
+                block.x = c * this.BLOCK_SIDE + this.FIELD_X + this.FIELD_BORDER_STROKE_WIDTH;
+                block.y = r * this.BLOCK_SIDE + this.FIELD_Y + this.FIELD_BORDER_STROKE_WIDTH;
+                block.width = block.height = this.BLOCK_SIDE;
 
-                    //console.log(`Adding block at ${block.x}, ${block.y}`);
+                const p = new Sprite();
 
-                    container.addChild(block);
-                }
+
+                if (this.gameStore.field[r][c] != 0) container.addChild(block);
             }
         }
 
@@ -141,25 +155,20 @@ export class PixiGame {
             const piece = toRawArray(this.gameStore.nextPieces[p]);
             const textureColor = Math.floor(Math.random() * this.BLOCK_COLORS_NUMBER);
             const texture = Assets.get('block' + textureColor);
-
-            //console.log(`Current piece: ${Array.isArray(piece)} ${piece.length}, color: ${textureColor}`);
             
             for (let r = 0; r < piece.length; r++) {
                 let lastBlockX = 0;
                 if (piece[r].length > maxCols) maxCols = piece[r].length;
                 
                 for (let c = 0; c < piece[r].length; c++) {
-                    if (piece[r][c] != 0) {
+                    const block = Sprite.from(texture);
+                    block.width = block.height = this.BLOCK_SIDE;
                         
-                        const block = Sprite.from(texture);
-                        block.width = block.height = this.BLOCK_SIDE;
-                        
-                        block.x = lastBlockX;
-                        block.y = r * this.BLOCK_SIDE;
-                        lastBlockX = block.x + this.BLOCK_SIDE;
+                    block.x = lastBlockX;
+                    block.y = r * this.BLOCK_SIDE;
+                    lastBlockX = block.x + this.BLOCK_SIDE;
 
-                        pieceContainer.addChild(block);
-                    }
+                    if (piece[r][c] != 0) pieceContainer.addChild(block);
                 }
             }
 
@@ -168,8 +177,6 @@ export class PixiGame {
             let x = new Text({ text: 'x', style: { fontSize: 16, fill: 0xff0000}});
             pieceContainer.addChild(x);
 
-            //pieceContainer.x = lastPieceWidth + pieceContainer.width / 2;
-            //pieceContainer.y = 0 + pieceContainer.height / 2;
             pieceContainer.pivot.set(pieceContainer.width / 2, pieceContainer.height / 2);
             container.addChild(pieceContainer);
         }

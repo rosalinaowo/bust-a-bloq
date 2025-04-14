@@ -40,7 +40,8 @@ export const useGameStore = defineStore('game', () => {
     const rows = ref(8);
     const columns = ref(8);
     const nextPiecesAmount = ref(3);
-    const field = ref(Array.from({ length: rows }, () => Array.from({ length: columns }, () => 0)));
+    const field = ref(Array.from({ length: rows.value }, () => Array.from({ length: columns.value }, () => 0)));
+    const fieldSprites = ref(Array.from({ length: rows.value }, () => Array.from({ length: columns.value }, () => null)));
     const nextPieces = ref([]);
 
     function loadExampleGame() {
@@ -61,9 +62,9 @@ export const useGameStore = defineStore('game', () => {
         let arrayRighe = [[]];
         let arrayColonne = [[]];
 
-        for (let i = 0; i < rows; i++) { //Controlla ogni riga
+        for (let i = 0; i < rows.value; i++) { //Controlla ogni riga
             console.log('ciao');
-            for (let j = 0; j < columns; j++) {//Controlla ogni colonna
+            for (let j = 0; j < columns.value; j++) {//Controlla ogni colonna
                 if(field.value[i][j] != 0) {//Controlla appena trova un 1 se ci sono righe/colonne da eliminare
                     for(let idxRiga = 0; idxRiga < rows; idxRiga++){
                         if(field.value[idxRiga][j] == 0){
@@ -76,11 +77,11 @@ export const useGameStore = defineStore('game', () => {
                         }
                     }
 
-                    for(let idxColonna = 0; idxColonna < columns; idxColonna++) {
+                    for(let idxColonna = 0; idxColonna < columns.value; idxColonna++) {
                         if(field.value[i][idxColonna] == 0) {
                             break
                         }
-                        else if(idxColonna == columns - 1) {
+                        else if(idxColonna == columns.value - 1) {
                             arrayRighe.push(i)
                         }
                     }
@@ -111,6 +112,7 @@ export const useGameStore = defineStore('game', () => {
         rows,
         columns,
         field,
+        fieldSprites,
         nextPieces,
         loadExampleGame,
         getRandomPieces,

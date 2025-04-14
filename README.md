@@ -2,7 +2,7 @@
 
 Reverse engineering del famoso gioco per telefono Block Blast, con aggiunta di interessanti feature.
 
-### Documentazione in [DOCS.md](./DOCS.md)
+### Documentazione in [DOCS.md](./docs/DOCS.md)
 
 ## Recommended IDE Setup
 
