@@ -62,5 +62,38 @@ Al contrario di altre tipologie di giochi simile (*es. Tetris*), i blocchi di (*
 
 ## Spiegazione codice
 
-- Creazione della pagina home, con l'inserimento del componente GameField (che visualizza il campo di gioco)
-![Home View code](./images/HomeView.jpeg "Home View code")
+- Creazione della pagina home, con l'inserimento del componente GameField (che visualizza il campo di gioco) e alcuni componenti di debug ([HomeView.vue](../src/views/HomeView.vue))
+
+  ![Home view code](./images/HomeView.jpeg "Home view code")
+
+- View del campo di gioco, creiamo un div con un riferimento a gameContainer, nel quale verrà visualizzato il gioco, e impostiamo due eventi per creare e per resettare il gioco quando il componente viene ricaricato ([GameField.vue](../src/components/GameField.vue))
+
+  ![Game field component code](./images/GameField.jpeg "Game field ccmponent code")
+
+- Navbar del sito, aggiungiamo icone e link alle altre pagine ([Navbar.vue](../src/components/Navbar.vue))
+
+  ![Navbar component code](./images/Navbar.png "Navbar component code")
+
+- Inizializzazione delle variabili per il render grafico, calcoliamo la posizione del campo e impostiamo la grandezza dei blocchi ([Graphics.js](../src/scripts/graphics.js))
+
+  ![Game field constructor](./images/Graphics_constructor.jpeg "Game field constructor")
+
+- Metodo per caricare le texture e renderle disponibili all'utilizzo ([Graphics.js](../src/scripts/graphics.js))
+
+  ![Load block textures function](./images/loadBlockTextures.jpeg "Load block textures function")
+
+- Metodo per renderizzare il campo di gioco, scorre la matrice del campo, crea uno sprite per ogni blocco e imposta le coordinate ([Graphics.js](../src/scripts/graphics.js))
+
+  ![Get field graphics function](./images/getFieldGraphic.jpeg "Get field graphics function")
+
+- Metodo che viene eseguito ogni frame, fa il render dell'intero gioco, imposta i gli eventi e aggiunge il titolo, il campo di gioco e i pezzi successivi ([Graphics.js](../src/scripts/graphics.js))
+
+  ![Graphics init function](./images/graphics_init.jpeg "Graphics init function")
+
+- Inazializzazione delle variabili necessarie al render dei pezzi successivi, creiamo l'oggetto, i suoi eventi e gli assegnamo una texture casuale ([Graphics.js](../src/scripts/graphics.js))
+
+  ![Draw next pieces 1](./images/drawNextPieces1.jpeg "Draw next pieces 1")
+
+- Assegnazione delle coordinate al pezzo appena creato e aggiunta al container
+
+  ![Draw next pieces 2](./images/drawNextPieces2.jpeg "Draw next pieces 2")
