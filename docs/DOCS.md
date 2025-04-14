@@ -62,17 +62,54 @@ Al contrario di altre tipologie di giochi simile (*es. Tetris*), i blocchi di (*
 
 ## Spiegazione codice
 
-- Creazione della pagina home, con l'inserimento del componente GameField (che visualizza il campo di gioco)
-![Home View code](./images/HomeView.jpeg "Home View code")
+- Creazione della pagina home, con l'inserimento del componente GameField (che visualizza il campo di gioco) e alcuni componenti di debug ([HomeView.vue](../src/views/HomeView.vue))
+
+  ![Home view code](./images/HomeView.jpeg "Home view code")
+
+- View del campo di gioco, creiamo un div con un riferimento a gameContainer, nel quale verrà visualizzato il gioco, e impostiamo due eventi per creare e per resettare il gioco quando il componente viene ricaricato ([GameField.vue](../src/components/GameField.vue))
+
+  ![Game field component code](./images/GameField.jpeg "Game field ccmponent code")
+
+- Navbar del sito, aggiungiamo icone e link alle altre pagine ([Navbar.vue](../src/components/Navbar.vue))
+
+  ![Navbar component code](./images/Navbar.png "Navbar component code")
+
+- Inizializzazione delle variabili per il render grafico, calcoliamo la posizione del campo e impostiamo la grandezza dei blocchi ([Graphics.js](../src/scripts/graphics.js))
+
+  ![Game field constructor](./images/Graphics_constructor.jpeg "Game field constructor")
+
+- Metodo per caricare le texture e renderle disponibili all'utilizzo ([Graphics.js](../src/scripts/graphics.js))
+
+  ![Load block textures function](./images/loadBlockTextures.jpeg "Load block textures function")
+
+- Metodo per renderizzare il campo di gioco, scorre la matrice del campo, crea uno sprite per ogni blocco e imposta le coordinate ([Graphics.js](../src/scripts/graphics.js))
+
+  ![Get field graphics function](./images/getFieldGraphic.jpeg "Get field graphics function")
+
+- Metodo che viene eseguito ogni frame, fa il render dell'intero gioco, imposta i gli eventi e aggiunge il titolo, il campo di gioco e i pezzi successivi ([Graphics.js](../src/scripts/graphics.js))
+
+  ![Graphics init function](./images/graphics_init.jpeg "Graphics init function")
+
+- Inazializzazione delle variabili necessarie al render dei pezzi successivi, creiamo l'oggetto, i suoi eventi e gli assegnamo una texture casuale ([Graphics.js](../src/scripts/graphics.js))
+
+  ![Draw next pieces 1](./images/drawNextPieces1.jpeg "Draw next pieces 1")
+
+- Assegnazione delle coordinate al pezzo appena creato e aggiunta al container
+
+  ![Draw next pieces 2](./images/drawNextPieces2.jpeg "Draw next pieces 2")
 
 - Creazione della matrice in grado di visualizzare il campo di gioco tramite metodi in graphics.js (come getFieldGraphics()). Questa variabile ci aiuterà a capire quali spazi nella board sono occupati e quali tipi di texture utilizzano. Ogni numero diverso da 0 indica una texture diversa.
-![Blocks code](./images/Field.jpg "Blocks code")
+  
+  ![Blocks code](./images/Field.jpg "Blocks code")
 
 - Creazione del lo store di Pinia usato per gestire lo stato dell'applicazione, oltre che una variabile "blocks" contenente tutti i tipi possibili di blocco che il giocatore può ottenere durante la partita.
-![Field code](./images/Blocks.jpg "Field code")
+  
+  ![Field code](./images/Blocks.jpg "Field code")
 
 - Inizializzazione delle variabili che determinano la larghezza e lungezza del campo, oltre che il metodo per caricare il campo d'esempio all'interno della nuova variabile "field" creata. In questo modo riusciamo agilmente a lavorare sul campo da gioco tramite tutte le sue varie proprietà.
-![getRandomCode method](./images/Variables.jpg "getRandomCode method")
+  
+  ![getRandomCode method](./images/Variables.jpg "getRandomCode method")
 
 - Funzione che fornisce al giocatore 3 pezzi casuali tra quelli all'interno della variabile "blocks" con una texture casuale. Questi pezzi saranno forniti al giocatore e potrà inserirli nel campo di gioco a suo piacimento.
-![Variables](./images/getRandomPieces.jpg "Variables")
+  
+  ![Variables](./images/getRandomPieces.jpg "Variables")

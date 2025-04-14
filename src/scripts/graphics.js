@@ -8,7 +8,6 @@ export class PixiGame {
 
         this.gameStore.loadExampleGame();
         this.gameStore.getRandomPieces();
-        //console.dir(this.gameStore.nextPieces);
 
         this.WIDTH = 800;
         this.HEIGHT = 800;
@@ -77,9 +76,6 @@ export class PixiGame {
                 block.y = r * this.BLOCK_SIDE + this.FIELD_Y + this.FIELD_BORDER_STROKE_WIDTH;
                 block.width = block.height = this.BLOCK_SIDE;
 
-                const p = new Sprite();
-
-
                 if (this.gameStore.field[r][c] != 0) container.addChild(block);
             }
         }
@@ -145,7 +141,7 @@ export class PixiGame {
             pieceContainer.x = lastPieceWidth;
             pieceContainer.y = 0;
 
-            pieceContainer.eventMode = 'static'
+            pieceContainer.eventMode = 'static';
             pieceContainer.cursor = 'pointer';
             pieceContainer.on('pointerdown', (event) => this.onDragStart(event, pieceContainer));
             this.app.stage.on('pointerup', (event) => this.onDragEnd(event));
