@@ -64,3 +64,15 @@ Al contrario di altre tipologie di giochi simile (*es. Tetris*), i blocchi di (*
 
 - Creazione della pagina home, con l'inserimento del componente GameField (che visualizza il campo di gioco)
 ![Home View code](./images/HomeView.jpeg "Home View code")
+
+- Creazione della matrice in grado di visualizzare il campo di gioco tramite metodi in graphics.js (come getFieldGraphics()). Questa variabile ci aiuterà a capire quali spazi nella board sono occupati e quali tipi di texture utilizzano. Ogni numero diverso da 0 indica una texture diversa.
+![Blocks code](./images/Field.jpg "Blocks code")
+
+- Creazione del lo store di Pinia usato per gestire lo stato dell'applicazione, oltre che una variabile "blocks" contenente tutti i tipi possibili di blocco che il giocatore può ottenere durante la partita.
+![Field code](./images/Blocks.jpg "Field code")
+
+- Inizializzazione delle variabili che determinano la larghezza e lungezza del campo, oltre che il metodo per caricare il campo d'esempio all'interno della nuova variabile "field" creata. In questo modo riusciamo agilmente a lavorare sul campo da gioco tramite tutte le sue varie proprietà.
+![getRandomCode method](./images/Variables.jpg "getRandomCode method")
+
+- Funzione che fornisce al giocatore 3 pezzi casuali tra quelli all'interno della variabile "blocks" con una texture casuale. Questi pezzi saranno forniti al giocatore e potrà inserirli nel campo di gioco a suo piacimento.
+![Variables](./images/getRandomPieces.jpg "Variables")
