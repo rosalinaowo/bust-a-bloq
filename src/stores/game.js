@@ -17,9 +17,6 @@ const exampleGame = {
 
 // Creaiamo ed esportiamo uno store, lo usamio per gestire lo stato dell'app
 export const useGameStore = defineStore('game', () => {
-    const texturePacks = ref([ 'default', 'blockMC' ]);
-    const selectedTexturePack = texturePacks.value[1];
-
     const blocks = ref([
         [[1, 1]], // 2x1
         [[1, 1, 1]], // 3x1
@@ -41,8 +38,12 @@ export const useGameStore = defineStore('game', () => {
     const columns = ref(8);
     const nextPiecesAmount = ref(3);
     const field = ref(Array.from({ length: rows.value }, () => Array.from({ length: columns.value }, () => 0)));
-    const fieldSprites = ref(Array.from({ length: rows.value }, () => Array.from({ length: columns.value }, () => null)));
+    //const fieldSprites = ref(Array.from({ length: rows.value }, () => Array.from({ length: columns.value }, () => null)));
+    const fieldSprites = ref([]);
     const nextPieces = ref([]);
+
+    const texturePacks = ref([ 'default', 'blockMC' ]);
+    const selectedTexturePack = texturePacks.value[1];
 
     function loadExampleGame() {
         field.value = exampleGame.field;

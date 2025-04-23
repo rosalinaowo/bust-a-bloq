@@ -46,14 +46,19 @@ export class PixiGame {
 
     initMatPoints() {
         for (let r = 0; r < this.gameStore.field.length; r++) {
+            const rowPieces = [];
             for (let c = 0; c < this.gameStore.field[r].length; c++) {
                 const p = new Sprite();
                 p.x = c * this.BLOCK_SIDE + this.FIELD_X + this.FIELD_BORDER_STROKE_WIDTH;
                 p.y = r * this.BLOCK_SIDE + this.FIELD_Y + this.FIELD_BORDER_STROKE_WIDTH;
                 p.width = p.height = this.BLOCK_SIDE;
 
-                this.gameStore.fieldSprites.value[r][c] = p;
+
+                // this.gameStore.fieldSprites.value[r][c] = p;
+                rowPieces.push(p);
             }
+
+            this.gameStore.fieldSprites.push(rowPieces);
         }
     }
 
@@ -70,13 +75,14 @@ export class PixiGame {
         // Pieces
         for (let r = 0; r < this.gameStore.field.length; r++) {
             for (let c = 0; c < this.gameStore.field[r].length; c++) {
-                const texture = Assets.get('block' + (this.gameStore.field[r][c] - 1));
-                const block = Sprite.from(texture);
-                block.x = c * this.BLOCK_SIDE + this.FIELD_X + this.FIELD_BORDER_STROKE_WIDTH;
-                block.y = r * this.BLOCK_SIDE + this.FIELD_Y + this.FIELD_BORDER_STROKE_WIDTH;
-                block.width = block.height = this.BLOCK_SIDE;
-
-                if (this.gameStore.field[r][c] != 0) container.addChild(block);
+                if (this.gameStore.field[r][c] != 0) {
+                    const texture = Assets.get('block' + (this.gameStore.field[r][c] - 1));
+                    const block = Sprite.from(texture);
+                    block.x = c * this.BLOCK_SIDE + this.FIELD_X + this.FIELD_BORDER_STROKE_WIDTH;
+                    block.y = r * this.BLOCK_SIDE + this.FIELD_Y + this.FIELD_BORDER_STROKE_WIDTH;
+                    block.width = block.height = this.BLOCK_SIDE;
+                    container.addChild(block);
+                }
             }
         }
 
@@ -149,6 +155,7 @@ export class PixiGame {
 
 
             const piece = toRawArray(this.gameStore.nextPieces[p]);
+            pieceContainer.pieceMatrix = piece;
             const textureColor = Math.floor(Math.random() * this.BLOCK_COLORS_NUMBER);
             const texture = Assets.get('block' + textureColor);
             
@@ -173,11 +180,27 @@ export class PixiGame {
             let x = new Text({ text: 'x', style: { fontSize: 16, fill: 0xff0000}});
             pieceContainer.addChild(x);
 
-            pieceContainer.pivot.set(pieceContainer.width / 2, pieceContainer.height / 2);
+            //pieceContainer.pivot.set(pieceContainer.width / 2, pieceContainer.height / 2);
             container.addChild(pieceContainer);
         }
 
         return container;
+    }
+
+    checkIfPieceFits(pieceContainer, gridX, gridY) {
+        console.dir(pieceContainer);
+        try {
+            for (let r = 0; r < pieceContainer.pieceMatrix.length; r++) {
+                for (let c = 0; c < pieceContainer.pieceMatrix[r].length; c++) {
+                    if (pieceContainer.pieceMatrix[r][c] != 0) {
+                        console.log(`Checking for free space at: ${gridX + c} ${gridY + r} => ${this.gameStore.field[gridX + c][gridY + r]}`);
+                        if (this.gameStore.field[gridY + r][gridX + c] != 0) return false;
+                    }
+                }
+            }
+
+            return true;
+        } catch { return false; }
     }
 
     onDragMove(event) {
@@ -193,9 +216,16 @@ export class PixiGame {
     
 
     onDragEnd() {
-        if (this.dragTarget) {
-            this.app.stage.off('pointermove', this.onDragMove);
-            this.dragTarget = null;
-        }
+        if (!this.dragTarget) return;
+
+        const gridX = Math.round((this.dragTarget.x - this.FIELD_BORDER_STROKE_WIDTH) / this.BLOCK_SIDE);
+        const gridY = Math.round((this.dragTarget.y + this.NEXT_PIECES_Y - this.FIELD_Y - this.FIELD_BORDER_STROKE_WIDTH) / this.BLOCK_SIDE);
+
+        console.log("Trying to place at", gridX, gridY);
+
+        console.log(this.checkIfPieceFits(this.dragTarget, gridX, gridY));
+
+        this.app.stage.off('pointermove', this.onDragMove);
+        this.dragTarget = null;
     }
 }
