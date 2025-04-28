@@ -6,9 +6,6 @@ export class PixiGame {
     constructor(htmlContainer) {
         this.gameStore = useGameStore();
 
-        this.gameStore.loadExampleGame();
-        this.gameStore.getRandomPieces();
-
         this.WIDTH = 800;
         this.HEIGHT = 800;
         this.CENTER_X = this.WIDTH / 2;
@@ -26,6 +23,9 @@ export class PixiGame {
         this.BLOCK_COLORS_NUMBER = 7;
         this.BLOCK_TEXTURE_PATHS = Array.from({ length: this.BLOCK_COLORS_NUMBER }, (_, i) => `${this.BLOCK_TEXTURE_BASE_PATH}block${i + 1}.png`);
         this.BLOCK_SIDE = 50;
+
+        this.gameStore.loadExampleGame();
+        this.gameStore.getRandomPieces(this.BLOCK_COLORS_NUMBER);
 
         this.dragTarget = null;
 
@@ -203,6 +203,15 @@ export class PixiGame {
         } catch { return false; }
     }
 
+    placePieceInField(pieceContainer, gridX, gridY) {
+        const pieceMatrix = pieceContainer.pieceMatrix;
+        for (let r = 0; r < pieceMatrix.length; r++) {
+            for (let c = 0; c < pieceMatrix[r].length; c++) {
+                this.gameStore.field[gridY + r][gridX + c] = pieceMatrix[r][c];
+            }
+        }
+    }
+
     onDragMove(event) {
         if (this.dragTarget) {
             this.dragTarget.parent.toLocal(event.global, null, this.dragTarget.position);
@@ -224,6 +233,8 @@ export class PixiGame {
         console.log("Trying to place at", gridX, gridY);
 
         console.log(this.checkIfPieceFits(this.dragTarget, gridX, gridY));
+
+        if(this.checkIfPieceFits(this.dragTarget, gridX, gridY)) this.placePieceInField(this.dragTarget, gridX, gridY);
 
         this.app.stage.off('pointermove', this.onDragMove);
         this.dragTarget = null;

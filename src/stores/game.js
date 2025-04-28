@@ -1,3 +1,4 @@
+import { toRawArray } from "@/scripts/utils";
 import { defineStore } from "pinia";
 import { reactive, ref } from "vue";
 
@@ -49,11 +50,28 @@ export const useGameStore = defineStore('game', () => {
         field.value = exampleGame.field;
     }
 
-    function getRandomPieces() {
+    function randomizePieceColors(piece, colorsCount) {
+        const color = Math.floor(Math.random() * colorsCount) + 1;
+        console.dir(piece);
+        console.log('Chosen color: ' + color);
+        console.log(`${piece.length}`);
+        for (let r = 0; r < piece.length; r++) {
+            for (let c = 0; c < piece[r].length; c++) {
+                if (piece[r][c] != 0) piece[r][c] = color;
+            }
+        }
+
+        return piece;
+    }
+
+    function getRandomPieces(colorsCount) {
         nextPieces.value = Array.from({ length: nextPiecesAmount.value }, () => {
             const idx = Math.floor(Math.random() * blocks.value.length);
             const selectedBlock = blocks.value[idx];
-            const blockCopy = {...selectedBlock};
+            let blockCopy = {...selectedBlock};
+            console.dir(blockCopy);
+            blockCopy = randomizePieceColors(toRawArray(blockCopy), colorsCount);
+            console.dir(blockCopy);
 
             return blockCopy;
         });
@@ -104,7 +122,6 @@ export const useGameStore = defineStore('game', () => {
             }
         }
     }
-
 
     return {
         texturePacks,
