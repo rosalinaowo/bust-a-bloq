@@ -5,7 +5,7 @@ import { reactive, ref } from "vue";
 // Campo di gioco di esempio
 const exampleGame = {
     "field": [
-        [ 1, 1, 1, 1, 1, 1, 6, 6 ],
+        [ 1, 1, 1, 1, 1, 0, 6, 6 ],
         [ 1, 3, 3, 0, 0, 0, 0, 6 ],
         [ 1, 0, 0, 0, 0, 0, 0, 0 ],
         [ 0, 0, 0, 0, 0, 0, 0, 0 ],
@@ -64,17 +64,33 @@ export const useGameStore = defineStore('game', () => {
         return piece;
     }
 
-    function getRandomPieces(colorsCount) {
-        nextPieces.value = Array.from({ length: nextPiecesAmount.value }, () => {
+    function generateRandomPieces(colorsCount) {
+        nextPieces.value = [];
+
+        for (let i = 0; i < nextPiecesAmount.value; i++) {
+            const colorIdx = Math.floor(Math.random() * colorsCount) + 1;
             const idx = Math.floor(Math.random() * blocks.value.length);
             const selectedBlock = blocks.value[idx];
-            let blockCopy = {...selectedBlock};
-            console.dir(blockCopy);
-            blockCopy = randomizePieceColors(toRawArray(blockCopy), colorsCount);
-            console.dir(blockCopy);
+            let blockCopy = toRawArray(selectedBlock);
 
-            return blockCopy;
-        });
+            let nextPiece = {
+                colorIdx: colorIdx,
+                matrix: blockCopy
+            }
+
+            nextPieces.value.push(nextPiece);
+        }
+
+        // nextPieces.value = Array.from({ length: nextPiecesAmount.value }, () => {
+        //     const idx = Math.floor(Math.random() * blocks.value.length);
+        //     const selectedBlock = blocks.value[idx];
+        //     let blockCopy = {...selectedBlock};
+        //     console.dir(blockCopy);
+        //     blockCopy = randomizePieceColors(toRawArray(blockCopy), colorsCount);
+        //     console.dir(blockCopy);
+
+        //     return blockCopy;
+        // });
     }
 
     function isLineCleared() {
@@ -133,7 +149,7 @@ export const useGameStore = defineStore('game', () => {
         fieldSprites,
         nextPieces,
         loadExampleGame,
-        getRandomPieces,
+        generateRandomPieces,
         deleteRowOrColumn,
         isLineCleared
     }

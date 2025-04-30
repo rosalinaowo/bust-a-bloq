@@ -1,6 +1,6 @@
 import { Application, Assets, Container, FillGradient, Graphics, GraphicsContext, nextPow2, Sprite, Text, TextStyle, TilingSprite, SCALE_MODES } from "pixi.js";
 import { useGameStore } from "@/stores/game";
-import { toRawArray } from "@/scripts/utils";
+import { toRaw } from "vue";
 
 export class PixiGame {
     constructor(htmlContainer) {
@@ -25,7 +25,7 @@ export class PixiGame {
         this.BLOCK_SIDE = 50;
 
         this.gameStore.loadExampleGame();
-        this.gameStore.getRandomPieces(this.BLOCK_COLORS_NUMBER);
+        this.gameStore.generateRandomPieces(this.BLOCK_COLORS_NUMBER);
 
         this.dragTarget = null;
 
@@ -37,11 +37,11 @@ export class PixiGame {
     }
 
     async loadBlockTextures() {
-        for (let i = 0; i < this.BLOCK_COLORS_NUMBER; i++) {
-            Assets.add({ alias: 'block' + i, src: this.BLOCK_TEXTURE_PATHS[i] });
+        for (let i = 1; i <= this.BLOCK_COLORS_NUMBER; i++) {
+            Assets.add({ alias: 'block' + i, src: this.BLOCK_TEXTURE_PATHS[i - 1]});
         }
         
-        return await Assets.load(Array.from({ length: this.BLOCK_COLORS_NUMBER }, (_, i) => 'block' + i));
+        return await Assets.load(Array.from({ length: this.BLOCK_COLORS_NUMBER }, (_, i) => 'block' + (i + 1)));
     }
 
     initMatPoints() {
@@ -62,7 +62,7 @@ export class PixiGame {
         }
     }
 
-    getFieldGraphic() {
+    getFieldContainer() {
         const container = new Container();
         const graphics = new Graphics();
 
@@ -76,7 +76,7 @@ export class PixiGame {
         for (let r = 0; r < this.gameStore.field.length; r++) {
             for (let c = 0; c < this.gameStore.field[r].length; c++) {
                 if (this.gameStore.field[r][c] != 0) {
-                    const texture = Assets.get('block' + (this.gameStore.field[r][c] - 1));
+                    const texture = Assets.get('block' + (this.gameStore.field[r][c]));
                     const block = Sprite.from(texture);
                     block.x = c * this.BLOCK_SIDE + this.FIELD_X + this.FIELD_BORDER_STROKE_WIDTH;
                     block.y = r * this.BLOCK_SIDE + this.FIELD_Y + this.FIELD_BORDER_STROKE_WIDTH;
@@ -125,16 +125,29 @@ export class PixiGame {
 
         this.app.stage.addChild(titleText);
 
-        this.app.stage.addChild(this.getFieldGraphic());
+        this.fieldContainer = this.getFieldContainer();
+        this.nextPiecesContainer = this.getNextPiecesContainer();
 
-        this.app.stage.addChild(this.drawNextPieces());
+        this.app.stage.addChild(this.fieldContainer);
+        this.app.stage.addChild(this.nextPiecesContainer);
     }
 
     destroy() {
         this.app.destroy(true, { children: true, texture: true });
     }
 
-    drawNextPieces() {
+    updateView() {
+        this.app.stage.removeChild(this.fieldContainer);
+        this.app.stage.removeChild(this.nextPiecesContainer);
+
+        this.fieldContainer = this.getFieldContainer();
+        this.nextPiecesContainer = this.getNextPiecesContainer();
+
+        this.app.stage.addChild(this.fieldContainer);
+        this.app.stage.addChild(this.nextPiecesContainer);
+    }
+
+    getNextPiecesContainer() {
         const container = new Container();
         container.x = this.FIELD_X;
         container.y = this.NEXT_PIECES_Y;
@@ -142,8 +155,14 @@ export class PixiGame {
         let lastPieceWidth = 0;
 
         for (let p = 0; p < this.gameStore.nextPieces.length; p++) {
+            const piece = toRaw(this.gameStore.nextPieces[p]);
+            console.dir(piece);
+            const pieceMatrix = piece.matrix;
+            const texture = Assets.get('block' + piece.colorIdx);
+
             let maxCols = 0;
             const pieceContainer = new Container();
+            pieceContainer.piece = piece;
             pieceContainer.x = lastPieceWidth;
             pieceContainer.y = 0;
 
@@ -154,16 +173,14 @@ export class PixiGame {
             this.app.stage.on('pointerupoutside', (event) => this.onDragEnd(event));
 
 
-            const piece = toRawArray(this.gameStore.nextPieces[p]);
-            pieceContainer.pieceMatrix = piece;
-            const textureColor = Math.floor(Math.random() * this.BLOCK_COLORS_NUMBER);
-            const texture = Assets.get('block' + textureColor);
+            // const piece = toRawArray(this.gameStore.nextPieces[p]);
+            // const textureColor = Math.floor(Math.random() * this.BLOCK_COLORS_NUMBER);
             
-            for (let r = 0; r < piece.length; r++) {
+            for (let r = 0; r < pieceMatrix.length; r++) {
                 let lastBlockX = 0;
-                if (piece[r].length > maxCols) maxCols = piece[r].length;
+                if (pieceMatrix[r].length > maxCols) maxCols = pieceMatrix[r].length;
                 
-                for (let c = 0; c < piece[r].length; c++) {
+                for (let c = 0; c < pieceMatrix[r].length; c++) {
                     const block = Sprite.from(texture);
                     block.width = block.height = this.BLOCK_SIDE;
                         
@@ -171,7 +188,7 @@ export class PixiGame {
                     block.y = r * this.BLOCK_SIDE;
                     lastBlockX = block.x + this.BLOCK_SIDE;
 
-                    if (piece[r][c] != 0) pieceContainer.addChild(block);
+                    if (pieceMatrix[r][c] != 0) pieceContainer.addChild(block);
                 }
             }
 
@@ -189,11 +206,12 @@ export class PixiGame {
 
     checkIfPieceFits(pieceContainer, gridX, gridY) {
         console.dir(pieceContainer);
+        const pieceMatrix = pieceContainer.piece.matrix;
         try {
-            for (let r = 0; r < pieceContainer.pieceMatrix.length; r++) {
-                for (let c = 0; c < pieceContainer.pieceMatrix[r].length; c++) {
-                    if (pieceContainer.pieceMatrix[r][c] != 0) {
-                        console.log(`Checking for free space at: ${gridX + c} ${gridY + r} => ${this.gameStore.field[gridX + c][gridY + r]}`);
+            for (let r = 0; r < pieceMatrix.length; r++) {
+                for (let c = 0; c < pieceMatrix[r].length; c++) {
+                    if (pieceMatrix[r][c] != 0) {
+                        console.log(`Checking for free space at ROW: ${gridY + r} COL: ${gridX + c} => ${this.gameStore.field[gridY + r][gridX + c]}`);
                         if (this.gameStore.field[gridY + r][gridX + c] != 0) return false;
                     }
                 }
@@ -204,12 +222,18 @@ export class PixiGame {
     }
 
     placePieceInField(pieceContainer, gridX, gridY) {
-        const pieceMatrix = pieceContainer.pieceMatrix;
+        const pieceMatrix = pieceContainer.piece.matrix;
+        const colorIdx = pieceContainer.piece.colorIdx;
+
         for (let r = 0; r < pieceMatrix.length; r++) {
             for (let c = 0; c < pieceMatrix[r].length; c++) {
-                this.gameStore.field[gridY + r][gridX + c] = pieceMatrix[r][c];
+                if (pieceMatrix[r][c] != 0) {
+                    this.gameStore.field[gridY + r][gridX + c] = colorIdx;
+                }
             }
         }
+
+        this.updateView();
     }
 
     onDragMove(event) {
@@ -231,10 +255,10 @@ export class PixiGame {
         const gridY = Math.round((this.dragTarget.y + this.NEXT_PIECES_Y - this.FIELD_Y - this.FIELD_BORDER_STROKE_WIDTH) / this.BLOCK_SIDE);
 
         console.log("Trying to place at", gridX, gridY);
+        let doesItFit = this.checkIfPieceFits(this.dragTarget, gridX, gridY);
+        console.log(doesItFit);
 
-        console.log(this.checkIfPieceFits(this.dragTarget, gridX, gridY));
-
-        if(this.checkIfPieceFits(this.dragTarget, gridX, gridY)) this.placePieceInField(this.dragTarget, gridX, gridY);
+        if(doesItFit) this.placePieceInField(this.dragTarget, gridX, gridY);
 
         this.app.stage.off('pointermove', this.onDragMove);
         this.dragTarget = null;
