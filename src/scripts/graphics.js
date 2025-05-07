@@ -157,6 +157,8 @@ export class PixiGame {
         for (let p = 0; p < this.gameStore.nextPieces.length; p++) {
             const piece = toRaw(this.gameStore.nextPieces[p]);
             console.dir(piece);
+            if (piece.pieceIdx === undefined) continue;
+
             const pieceMatrix = piece.matrix;
             const texture = Assets.get('block' + piece.colorIdx);
 
@@ -233,6 +235,7 @@ export class PixiGame {
             }
         }
 
+        this.gameStore.nextPieces[this.dragTarget.piece.pieceIdx] = [];
         this.updateView();
     }
 
@@ -258,7 +261,9 @@ export class PixiGame {
         let doesItFit = this.checkIfPieceFits(this.dragTarget, gridX, gridY);
         console.log(doesItFit);
 
-        if(doesItFit) this.placePieceInField(this.dragTarget, gridX, gridY);
+        if(doesItFit) {
+            this.placePieceInField(this.dragTarget, gridX, gridY);
+        }
 
         this.app.stage.off('pointermove', this.onDragMove);
         this.dragTarget = null;

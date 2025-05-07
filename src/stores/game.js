@@ -74,6 +74,7 @@ export const useGameStore = defineStore('game', () => {
             let blockCopy = toRawArray(selectedBlock);
 
             let nextPiece = {
+                pieceIdx: i,
                 colorIdx: colorIdx,
                 matrix: blockCopy
             }
