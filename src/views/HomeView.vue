@@ -2,7 +2,7 @@
 import GameField from '@/components/GameField.vue';
 import { useGameStore } from '@/stores/game';
 
-const gameStore = useGameStore();
+var gameStore = useGameStore();
 </script>
 
 <template>
@@ -20,7 +20,8 @@ const gameStore = useGameStore();
         </div>
         -----------
       </div>
-      <button class="btn btn-primary" @click="gameStore.isLineCleared()">isLineCleared</button>
+      <!-- <button class="btn btn-primary" @click="gameStore.clearLines()">isLineCleared</button> -->
+      <button class="btn btn-primary" @click="">Reset</button>
     </div>
   </div>
 </template>

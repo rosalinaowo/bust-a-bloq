@@ -1,6 +1,5 @@
 import { toRawArray } from "@/scripts/utils";
 import { defineStore } from "pinia";
-import { compileOutputs } from "pixi.js";
 import { reactive, ref } from "vue";
 
 // Campo di gioco di esempio
@@ -51,20 +50,6 @@ export const useGameStore = defineStore('game', () => {
         field.value = exampleGame.field;
     }
 
-    function randomizePieceColors(piece, colorsCount) {
-        const color = Math.floor(Math.random() * colorsCount) + 1;
-        console.dir(piece);
-        console.log('Chosen color: ' + color);
-        console.log(`${piece.length}`);
-        for (let r = 0; r < piece.length; r++) {
-            for (let c = 0; c < piece[r].length; c++) {
-                if (piece[r][c] != 0) piece[r][c] = color;
-            }
-        }
-
-        return piece;
-    }
-
     function generateRandomPieces(colorsCount) {
         nextPieces.value = [];
 
@@ -95,7 +80,7 @@ export const useGameStore = defineStore('game', () => {
         // });
     }
 
-    function isLineCleared() {
+    function clearLines() {
         let arrayRighe = [];
         let arrayColonne = [];
 
@@ -162,6 +147,6 @@ export const useGameStore = defineStore('game', () => {
         loadExampleGame,
         generateRandomPieces,
         deleteRowOrColumn: deleteRowAndColumns,
-        isLineCleared
+        clearLines
     }
 });

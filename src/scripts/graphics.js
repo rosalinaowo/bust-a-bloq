@@ -236,7 +236,8 @@ export class PixiGame {
         }
 
         this.gameStore.nextPieces[this.dragTarget.piece.pieceIdx] = [];
-        this.updateView();
+        if (this.gameStore.nextPieces[0].length == 0 && this.gameStore.nextPieces[1].length == 0 && this.gameStore.nextPieces[2].length == 0) this.gameStore.generateRandomPieces(this.BLOCK_COLORS_NUMBER);
+        //this.updateView();
     }
 
     onDragMove(event) {
@@ -264,6 +265,9 @@ export class PixiGame {
         if(doesItFit) {
             this.placePieceInField(this.dragTarget, gridX, gridY);
         }
+
+        this.gameStore.clearLines();
+        this.updateView();
 
         this.app.stage.off('pointermove', this.onDragMove);
         this.dragTarget = null;
