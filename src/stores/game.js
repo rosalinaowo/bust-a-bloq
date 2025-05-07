@@ -1,6 +1,6 @@
 import { toRawArray } from "@/scripts/utils";
 import { defineStore } from "pinia";
-import { compileOutputs } from "pixi.js";
+import { compileOutputs, parseFunctionBody } from "pixi.js";
 import { reactive, ref } from "vue";
 
 // Campo di gioco di esempio
@@ -36,6 +36,7 @@ export const useGameStore = defineStore('game', () => {
         [[1, 1], [1, 0], [1, 0]] // Z
     ]);
 
+    let points = 0;
     const rows = ref(8);
     const columns = ref(8);
     const nextPiecesAmount = ref(3);
@@ -95,6 +96,9 @@ export const useGameStore = defineStore('game', () => {
         // });
     }
 
+
+
+
     function isLineCleared() {
         let arrayRighe = [];
         let arrayColonne = [];
@@ -109,6 +113,7 @@ export const useGameStore = defineStore('game', () => {
                         else {
                             if(idxRiga == rows.value - 1) {
                                 arrayColonne.push(j)
+                                points += 80;
                                 console.log('Colonna Nr.' + j + 'trovata');
                             }
                         }
@@ -118,10 +123,13 @@ export const useGameStore = defineStore('game', () => {
                         if(field.value[i][idxColonna] == 0 || arrayRighe.includes(i)) {
                             break;
                         }
-                        else if(idxColonna == columns.value - 1) {
-                            arrayRighe.push(i)
-                            console.log('Riga Nr.' + i + 'trovata');
-                        }
+                        else {
+                            if(idxColonna == columns.value - 1) {
+                                arrayRighe.push(i)
+                                points += 80;
+                                console.log('Riga Nr.' + i + 'trovata');
+                            }
+                        }                       
                     }
                 }
             }
