@@ -1,5 +1,6 @@
 import { toRawArray } from "@/scripts/utils";
 import { defineStore } from "pinia";
+import { compileOutputs } from "pixi.js";
 import { reactive, ref } from "vue";
 
 // Campo di gioco di esempio
@@ -95,47 +96,56 @@ export const useGameStore = defineStore('game', () => {
     }
 
     function isLineCleared() {
-        let arrayRighe = [[]];
-        let arrayColonne = [[]];
+        let arrayRighe = [];
+        let arrayColonne = [];
 
         for (let i = 0; i < rows.value; i++) { //Controlla ogni riga
-            console.log('ciao');
             for (let j = 0; j < columns.value; j++) {//Controlla ogni colonna
                 if(field.value[i][j] != 0) {//Controlla appena trova un 1 se ci sono righe/colonne da eliminare
-                    for(let idxRiga = 0; idxRiga < rows; idxRiga++){
-                        if(field.value[idxRiga][j] == 0){
+                    for(let idxRiga = 0; idxRiga < rows.value; idxRiga++){
+                        if(field.value[idxRiga][j] == 0 || arrayColonne.includes(j)) {
                             break;
                         }
                         else {
-                            if(idxRiga == rows - 1) {
+                            if(idxRiga == rows.value - 1) {
                                 arrayColonne.push(j)
+                                console.log('Colonna Nr.' + j + 'trovata');
                             }
                         }
                     }
 
                     for(let idxColonna = 0; idxColonna < columns.value; idxColonna++) {
-                        if(field.value[i][idxColonna] == 0) {
-                            break
+                        if(field.value[i][idxColonna] == 0 || arrayRighe.includes(i)) {
+                            break;
                         }
                         else if(idxColonna == columns.value - 1) {
                             arrayRighe.push(i)
+                            console.log('Riga Nr.' + i + 'trovata');
                         }
                     }
                 }
             }
-            deleteRowOrColumn(arrayRighe, arrayColonne);
+
         }
+
+        deleteRowAndColumns(arrayRighe, arrayColonne);
     }
 
-    function deleteRowOrColumn(righe, colonne){
-        for(let nrColonne = 0; nrColonne < colonne.length; nrColonne++) {
-            for(let i = 0; i < rows; i++) {
-                field.value[i][colonne] = 0
+    function deleteRowAndColumns(righe, colonne){
+        console.dir(righe);
+        console.dir(colonne);
+        if(colonne.length != 0) {
+            for(let nrColonne = 0; nrColonne < colonne.length; nrColonne++) {
+                for(let i = 0; i < rows.value; i++) {
+                    field.value[i][colonne] = 0
+                }
             }
         }
-        for(let nrRighe = 0; nrRighe < righe.length; nrRighe++) {
-            for(let i = 0; i < rows; i++) {
-                field.value[righe][i] = 0
+        if(righe.length != 0) {
+            for(let nrRighe = 0; nrRighe < righe.length; nrRighe++) {
+                for(let i = 0; i < columns.value; i++) {
+                    field.value[righe][i] = 0
+                }
             }
         }
     }
@@ -151,7 +161,7 @@ export const useGameStore = defineStore('game', () => {
         nextPieces,
         loadExampleGame,
         generateRandomPieces,
-        deleteRowOrColumn,
+        deleteRowOrColumn: deleteRowAndColumns,
         isLineCleared
     }
 });
