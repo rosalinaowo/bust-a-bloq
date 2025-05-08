@@ -34,8 +34,9 @@ export const useGameStore = defineStore('game', () => {
         [[1, 1], [0, 1], [0, 1]], // S
         [[1, 1], [1, 0], [1, 0]] // Z
     ]);
+    const pointsMultiplier = ref([ 1.1, 1.2, 1.5 ]);
+    const points = ref(0);
 
-    let points = 0;
     const rows = ref(8);
     const columns = ref(8);
     const nextPiecesAmount = ref(3);
@@ -68,20 +69,10 @@ export const useGameStore = defineStore('game', () => {
 
             nextPieces.value.push(nextPiece);
         }
-
-        // nextPieces.value = Array.from({ length: nextPiecesAmount.value }, () => {
-        //     const idx = Math.floor(Math.random() * blocks.value.length);
-        //     const selectedBlock = blocks.value[idx];
-        //     let blockCopy = {...selectedBlock};
-        //     console.dir(blockCopy);
-        //     blockCopy = randomizePieceColors(toRawArray(blockCopy), colorsCount);
-        //     console.dir(blockCopy);
-
-        //     return blockCopy;
-        // });
     }
   
     function clearLines() {
+        let count = 0;
         let arrayRighe = [];
         let arrayColonne = [];
 
@@ -94,8 +85,9 @@ export const useGameStore = defineStore('game', () => {
                         }
                         else {
                             if(idxRiga == rows.value - 1) {
-                                arrayColonne.push(j)
-                                points += 80;
+                                arrayColonne.push(j);
+                                count++;
+                                points.value += 80;
                                 console.log('Colonna Nr.' + j + 'trovata');
                             }
                         }
@@ -107,15 +99,22 @@ export const useGameStore = defineStore('game', () => {
                         }
                         else {
                             if(idxColonna == columns.value - 1) {
-                                arrayRighe.push(i)
-                                points += 80;
+                                arrayRighe.push(i);
+                                count++;
+                                points.value += 80;
                                 console.log('Riga Nr.' + i + 'trovata');
                             }
                         }                       
                     }
                 }
             }
+        }
 
+        switch (count) {
+            case 0: case 1: break;
+            case 2: case 3: points.value = Math.floor(points.value * pointsMultiplier.value[0]); break;
+            case 4: case 5: points.value = Math.floor(points.value * pointsMultiplier.value[1]); break;
+            default: points.value = Math.floor(points.value * pointsMultiplier.value[2]); break;
         }
 
         deleteRowAndColumns(arrayRighe, arrayColonne);
@@ -127,14 +126,15 @@ export const useGameStore = defineStore('game', () => {
         if(colonne.length != 0) {
             for(let nrColonne = 0; nrColonne < colonne.length; nrColonne++) {
                 for(let i = 0; i < rows.value; i++) {
-                    field.value[i][colonne] = 0
+                    field.value[i][colonne[nrColonne]] = 0;
                 }
             }
         }
         if(righe.length != 0) {
             for(let nrRighe = 0; nrRighe < righe.length; nrRighe++) {
                 for(let i = 0; i < columns.value; i++) {
-                    field.value[righe][i] = 0
+                    console.log(`RIGAAAAA: ${righe}`)
+                    field.value[righe[nrRighe]][i] = 0;
                 }
             }
         }
@@ -149,9 +149,10 @@ export const useGameStore = defineStore('game', () => {
         field,
         fieldSprites,
         nextPieces,
+        points,
         loadExampleGame,
         generateRandomPieces,
-        deleteRowOrColumn: deleteRowAndColumns,
+        deleteRowAndColumns,
         clearLines
     }
 });

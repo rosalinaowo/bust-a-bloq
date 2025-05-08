@@ -1,12 +1,12 @@
-import { Application, Assets, Container, FillGradient, Graphics, GraphicsContext, nextPow2, Sprite, Text, TextStyle, TilingSprite, SCALE_MODES } from "pixi.js";
+import { Application, Assets, Container, FillGradient, Graphics, GraphicsContext, nextPow2, Sprite, Text, TextStyle, TilingSprite, SCALE_MODES, Ticker } from "pixi.js";
 import { useGameStore } from "@/stores/game";
-import { toRaw } from "vue";
+import { toRaw, watch } from "vue";
 
 export class PixiGame {
     constructor(htmlContainer) {
         this.gameStore = useGameStore();
 
-        this.WIDTH = 800;
+        this.WIDTH = 1000;
         this.HEIGHT = 800;
         this.CENTER_X = this.WIDTH / 2;
         this.CENTER_Y = this.HEIGHT / 2;
@@ -122,8 +122,31 @@ export class PixiGame {
         const titleText = new Text({ text: 'Bust-a-bloq', style: titleTextStyle });
         titleText.x = this.CENTER_X - titleText.width / 2;
         titleText.y = 0;
-
         this.app.stage.addChild(titleText);
+
+        // const ptContainer = new Container({
+        //     isRenderGroup: true
+        // })
+
+        const pointsText = new Text({ text: `Points: ${this.gameStore.points}`, style: titleTextStyle });
+        pointsText.x = 5;
+        pointsText.y = 0;
+
+        // const pointsTicker = new Ticker();
+        // pointsTicker.add(() => {
+        //     pointsText.text = `Points: ${this.gameStore.points}`;
+        // });
+        // pointsTicker.start();
+        
+        //ptContainer.addChild(pointsText);
+        // this.app.stage.addChild(ptContainer);
+        // this.app.renderer.render(ptContainer);
+        this.app.stage.addChild(pointsText);
+
+        watch(() => this.gameStore.points, (newPoints) => {
+            pointsText.text = `Points: ${newPoints}`;
+        })
+
 
         this.fieldContainer = this.getFieldContainer();
         this.nextPiecesContainer = this.getNextPiecesContainer();

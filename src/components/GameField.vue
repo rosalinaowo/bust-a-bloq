@@ -1,6 +1,6 @@
 <script setup>
 import { PixiGame } from '@/scripts/graphics';
-import { onMounted, onUnmounted, ref } from 'vue';
+import { onMounted, onUnmounted, ref, watch } from 'vue';
 
 const gameContainer = ref(null);
 let pixiGame = null;
