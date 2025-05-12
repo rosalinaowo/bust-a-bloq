@@ -47,9 +47,12 @@ export const useGameStore = defineStore('game', () => {
 
     const texturePacks = ref([ 'default', 'blockMC' ]);
     const selectedTexturePack = texturePacks.value[1];
+    const blockColorsNumber = ref(0);
+    const reset = ref(false);
 
     function loadExampleGame() {
-        field.value = exampleGame.field;
+        //field.value = exampleGame.field;
+        field.value = exampleGame.field.map(row => [...row]);
     }
 
     function generateRandomPieces(colorsCount) {
@@ -159,9 +162,19 @@ export const useGameStore = defineStore('game', () => {
         }
     }
 
+    function resetGame() {
+        points.value = 0;
+        field.value = Array.from({ length: rows.value }, () => Array.from({ length: columns.value }, () => 0));
+        nextPieces.value = [];
+        loadExampleGame();
+        generateRandomPieces(blockColorsNumber.value);
+        reset.value = true;
+    }
+
     return {
         texturePacks,
         selectedTexturePack,
+        blockColorsNumber,
         blocks,
         rows,
         columns,
@@ -169,9 +182,11 @@ export const useGameStore = defineStore('game', () => {
         fieldSprites,
         nextPieces,
         points,
+        reset,
         loadExampleGame,
         generateRandomPieces,
         deleteRowAndColumns,
-        clearLines
+        clearLines,
+        resetGame
     }
 });

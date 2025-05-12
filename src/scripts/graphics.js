@@ -24,8 +24,10 @@ export class PixiGame {
         this.BLOCK_TEXTURE_PATHS = Array.from({ length: this.BLOCK_COLORS_NUMBER }, (_, i) => `${this.BLOCK_TEXTURE_BASE_PATH}block${i + 1}.png`);
         this.BLOCK_SIDE = 50;
 
-        this.gameStore.loadExampleGame();
-        this.gameStore.generateRandomPieces(this.BLOCK_COLORS_NUMBER);
+        this.gameStore.blockColorsNumber = this.BLOCK_COLORS_NUMBER;
+        // this.gameStore.loadExampleGame();
+        // this.gameStore.generateRandomPieces(this.BLOCK_COLORS_NUMBER);
+        this.gameStore.resetGame();
 
         this.dragTarget = null;
 
@@ -34,6 +36,15 @@ export class PixiGame {
         this.initMatPoints();
 
         this.init(htmlContainer);
+
+        watch(() => this.gameStore.reset, (value) => {
+            console.log('VIEW CHANGE');
+            if (value) {
+                console.log('VIEW RESET')
+                this.updateView();
+                this.gameStore.reset = false;
+            }
+        });
     }
 
     async loadBlockTextures() {
@@ -145,7 +156,7 @@ export class PixiGame {
 
         watch(() => this.gameStore.points, (newPoints) => {
             pointsText.text = `Points: ${newPoints}`;
-        })
+        });
 
 
         this.fieldContainer = this.getFieldContainer();
