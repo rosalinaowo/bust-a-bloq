@@ -75,59 +75,24 @@ export const useGameStore = defineStore('game', () => {
         let count = 0;
         let arrayRighe = [];
         let arrayColonne = [];
-
-        /*for (let i = 0; i < rows.value; i++) { //Controlla ogni riga
-            for (let j = 0; j < columns.value; j++) {//Controlla ogni colonna
-                if(field.value[i][j] != 0) {//Controlla appena trova un 1 se ci sono righe/colonne da eliminare
-                    for(let idxRiga = 0; idxRiga < rows.value; idxRiga++){
-                        if(field.value[idxRiga][j] == 0 || arrayColonne.includes(j)) {
-                            break;
-                        }
-                        else {
-                            if(idxRiga == rows.value - 1) {
-                                arrayColonne.push(j);
-                                count++;
-                                points.value += 80;
-                                console.log('Colonna Nr.' + j + 'trovata');
-                            }
-                        }
-                    }
-
-                    for(let idxColonna = 0; idxColonna < columns.value; idxColonna++) {
-                        if(field.value[i][idxColonna] == 0 || arrayRighe.includes(i)) {
-                            break;
-                        }
-                        else {
-                            if(idxColonna == columns.value - 1) {
-                                arrayRighe.push(i);
-                                count++;
-                                points.value += 80;
-                                console.log('Riga Nr.' + i + 'trovata');
-                            }
-                        }                       
-                    }
-                }
-            }*/
+        const fieldData = field.value;
 
         for (let i = 0; i < rows.value; i++) { //Controlla ogni riga
-            {
-                if(field.value[i].every((cell) => cell != 0)) { //Se in una riga tutti i numeri sono diversi da 0 la elimina
+                if(fieldData[i].every((cell) => cell != 0)) { //Se in una riga tutti i numeri sono diversi da 0 la elimina
                     arrayRighe.push(i);
                     count++;
                     points.value += 80;
-                    console.log('Riga Nr.' + i + 'trovata');
                 }
-            }
         }
+        
         for (let j = 0; j < columns.value; j++) { // Controlla ogni colonna
-            let colonna = field.value.map(row => row[j]); // Estrai la colonna j-esima
+            let colonna = fieldData.map(row => row[j]); // Estrai la colonna j-esima
             if (colonna.every(cell => cell != 0)) { // Se tutti i numeri nella colonna sono diversi da 0
                 arrayColonne.push(j); // Salva l'indice della colonna
                 count++;
                 points.value += 80;
-                console.log('Colonna Nr.' + j + ' trovata');
             }
-        }
+        }            
 
         switch (count) {
             case 0: case 1: break;
@@ -152,7 +117,6 @@ export const useGameStore = defineStore('game', () => {
         if(righe.length != 0) {
             for(let nrRighe = 0; nrRighe < righe.length; nrRighe++) {
                 for(let i = 0; i < columns.value; i++) {
-                    console.log(`RIGAAAAA: ${righe}`)
                     field.value[righe[nrRighe]][i] = 0;
                 }
             }
