@@ -21,7 +21,7 @@ var gameStore = useGameStore();
         -----------
       </div>
       <!-- <button class="btn btn-primary" @click="gameStore.clearLines()">isLineCleared</button> -->
-      <button class="btn btn-primary" @click="">Reset</button>
+      <button class="btn btn-primary" @click="gameStore.resetGame();">Reset</button>
     </div>
   </div>
 </template>
