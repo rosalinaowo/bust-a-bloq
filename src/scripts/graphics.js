@@ -1,4 +1,4 @@
-import { Application, Assets, Container, FillGradient, Graphics, GraphicsContext, nextPow2, Sprite, Text, TextStyle, TilingSprite, SCALE_MODES, Ticker } from "pixi.js";
+import { Application, Assets, Container, Graphics, Sprite, Text, TextStyle, SCALE_MODES } from "pixi.js";
 import { useGameStore } from "@/stores/game";
 import { toRaw, watch } from "vue";
 
@@ -36,15 +36,6 @@ export class PixiGame {
         this.initMatPoints();
 
         this.init(htmlContainer);
-
-        watch(() => this.gameStore.reset, (value) => {
-            console.log('VIEW CHANGE');
-            if (value) {
-                console.log('VIEW RESET')
-                this.updateView();
-                this.gameStore.reset = false;
-            }
-        });
     }
 
     async loadBlockTextures() {
@@ -156,6 +147,10 @@ export class PixiGame {
 
         watch(() => this.gameStore.points, (newPoints) => {
             pointsText.text = `Points: ${newPoints}`;
+            if (this.gameStore.reset) {
+                this.updateView();
+                this.gameStore.reset = false;
+            }
         });
 
 
