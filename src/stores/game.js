@@ -1,3 +1,4 @@
+import { PixiGame } from '@/scripts/graphics';
 import { toRawArray } from "@/scripts/utils";
 import { defineStore } from "pinia";
 import { reactive, ref } from "vue";
@@ -18,6 +19,7 @@ const exampleGame = {
 
 // Creaiamo ed esportiamo uno store, lo usamio per gestire lo stato dell'app
 export const useGameStore = defineStore('game', () => {
+    var pixiGame = ref(null);
     const blocks = ref([
         [[1, 1]], // 2x1
         [[1, 1, 1]], // 3x1
@@ -48,7 +50,20 @@ export const useGameStore = defineStore('game', () => {
     const texturePacks = ref([ 'default', 'blockMC' ]);
     const selectedTexturePack = texturePacks.value[1];
     const blockColorsNumber = ref(0);
-    const reset = ref(false);
+    const reset = ref(0);
+
+    function initPixiGame(htmlContainer) {
+        if (!pixiGame.value) {
+            pixiGame.value = new PixiGame(htmlContainer);
+        }
+    }
+
+    function destroyPixiGame() {
+        if (pixiGame.value) {
+            pixiGame.value.destroy();
+            pixiGame.value = null;
+        }
+    }
 
     function loadExampleGame() {
         //field.value = exampleGame.field;
@@ -168,10 +183,14 @@ export const useGameStore = defineStore('game', () => {
         nextPieces.value = [];
         loadExampleGame();
         generateRandomPieces(blockColorsNumber.value);
-        reset.value = true;
+        reset.value = 1;
+        console.log('RESET VALUE: ' + reset.value);
+        reset.value = 0;
+        console.log('RESET VALUE:' + reset.value);
     }
 
     return {
+        pixiGame,
         texturePacks,
         selectedTexturePack,
         blockColorsNumber,
@@ -183,6 +202,8 @@ export const useGameStore = defineStore('game', () => {
         nextPieces,
         points,
         reset,
+        initPixiGame,
+        destroyPixiGame,
         loadExampleGame,
         generateRandomPieces,
         deleteRowAndColumns,

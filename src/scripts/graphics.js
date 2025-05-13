@@ -147,9 +147,18 @@ export class PixiGame {
 
         watch(() => this.gameStore.points, (newPoints) => {
             pointsText.text = `Points: ${newPoints}`;
-            if (this.gameStore.reset) {
+            // if (this.gameStore.reset) {
+            //     //this.gameStore.points = 0;
+            //     this.updateView();
+            //     this.gameStore.reset = false;
+            // }
+        });
+
+        watch(() => this.gameStore.reset, (isReset) => {
+            console.log('RESET')
+            if (isReset === 1) {
                 this.updateView();
-                this.gameStore.reset = false;
+                //this.gameStore.reset = 0;
             }
         });
 
