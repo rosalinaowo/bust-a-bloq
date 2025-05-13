@@ -107,18 +107,16 @@ export const useGameStore = defineStore('game', () => {
     function deleteRowAndColumns(righe, colonne){
         console.dir(righe);
         console.dir(colonne);
-        if(colonne.length != 0) {
+        if(colonne.length != 0) { //Se c'è una colonna piena
             for(let nrColonne = 0; nrColonne < colonne.length; nrColonne++) {
                 for(let i = 0; i < rows.value; i++) {
                     field.value[i][colonne[nrColonne]] = 0;
                 }
             }
         }
-        if(righe.length != 0) {
+        if(righe.length != 0) { //Se c'è una riga piena
             for(let nrRighe = 0; nrRighe < righe.length; nrRighe++) {
-                for(let i = 0; i < columns.value; i++) {
-                    field.value[righe[nrRighe]][i] = 0;
-                }
+                field.value[righe[nrRighe]].fill(0); // Riempi la riga con 0
             }
         }
     }
