@@ -1,3 +1,4 @@
+import { PixiGame } from '@/scripts/graphics';
 import { toRawArray } from "@/scripts/utils";
 import { defineStore } from "pinia";
 import { reactive, ref } from "vue";
@@ -18,6 +19,7 @@ const exampleGame = {
 
 // Creaiamo ed esportiamo uno store, lo usamio per gestire lo stato dell'app
 export const useGameStore = defineStore('game', () => {
+    var pixiGame = ref(null);
     const blocks = ref([
         [[1, 1]], // 2x1
         [[1, 1, 1]], // 3x1
@@ -47,9 +49,25 @@ export const useGameStore = defineStore('game', () => {
 
     const texturePacks = ref([ 'default', 'blockMC' ]);
     const selectedTexturePack = texturePacks.value[1];
+    const blockColorsNumber = ref(0);
+    const reset = ref(0);
+
+    function initPixiGame(htmlContainer) {
+        if (!pixiGame.value) {
+            pixiGame.value = new PixiGame(htmlContainer);
+        }
+    }
+
+    function destroyPixiGame() {
+        if (pixiGame.value) {
+            pixiGame.value.destroy();
+            pixiGame.value = null;
+        }
+    }
 
     function loadExampleGame() {
-        field.value = exampleGame.field;
+        //field.value = exampleGame.field;
+        field.value = exampleGame.field.map(row => [...row]);
     }
 
     function generateRandomPieces(colorsCount) {
@@ -130,9 +148,23 @@ export const useGameStore = defineStore('game', () => {
     }
     
 
+    function resetGame() {
+        points.value = 0;
+        field.value = Array.from({ length: rows.value }, () => Array.from({ length: columns.value }, () => 0));
+        nextPieces.value = [];
+        loadExampleGame();
+        generateRandomPieces(blockColorsNumber.value);
+        reset.value = 1;
+        console.log('RESET VALUE: ' + reset.value);
+        reset.value = 0;
+        console.log('RESET VALUE:' + reset.value);
+    }
+
     return {
+        pixiGame,
         texturePacks,
         selectedTexturePack,
+        blockColorsNumber,
         blocks,
         rows,
         columns,
@@ -140,8 +172,12 @@ export const useGameStore = defineStore('game', () => {
         fieldSprites,
         nextPieces,
         points,
+        reset,
+        initPixiGame,
+        destroyPixiGame,
         loadExampleGame,
         generateRandomPieces,
-        clearLines
+        clearLines,
+        resetGame
     }
 });
