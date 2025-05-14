@@ -33,7 +33,7 @@ export class PixiGame {
 
         this.app = new Application();
 
-        this.initMatPoints();
+        //this.initMatPoints();
 
         this.init(htmlContainer);
 
@@ -55,23 +55,23 @@ export class PixiGame {
         return await Assets.load(Array.from({ length: this.BLOCK_COLORS_NUMBER }, (_, i) => 'block' + (i + 1)));
     }
 
-    initMatPoints() {
-        for (let r = 0; r < this.gameStore.field.length; r++) {
-            const rowPieces = [];
-            for (let c = 0; c < this.gameStore.field[r].length; c++) {
-                const p = new Sprite();
-                p.x = c * this.BLOCK_SIDE + this.FIELD_X + this.FIELD_BORDER_STROKE_WIDTH;
-                p.y = r * this.BLOCK_SIDE + this.FIELD_Y + this.FIELD_BORDER_STROKE_WIDTH;
-                p.width = p.height = this.BLOCK_SIDE;
+    // initMatPoints() {    WALL OF SHAME, METODO DISASTROSO E DANNOSO, big ball o fmud
+    //     for (let r = 0; r < this.gameStore.field.length; r++) {
+    //         const rowPieces = [];
+    //         for (let c = 0; c < this.gameStore.field[r].length; c++) {
+    //             const p = new Sprite();
+    //             p.x = c * this.BLOCK_SIDE + this.FIELD_X + this.FIELD_BORDER_STROKE_WIDTH;
+    //             p.y = r * this.BLOCK_SIDE + this.FIELD_Y + this.FIELD_BORDER_STROKE_WIDTH;
+    //             p.width = p.height = this.BLOCK_SIDE;
 
 
-                // this.gameStore.fieldSprites.value[r][c] = p;
-                rowPieces.push(p);
-            }
+    //             // this.gameStore.fieldSprites.value[r][c] = p;
+    //             rowPieces.push(p);
+    //         }
 
-            this.gameStore.fieldSprites.push(rowPieces);
-        }
-    }
+    //         this.gameStore.fieldSprites.push(rowPieces);
+    //     }
+    // }
 
     getFieldContainer() {
         const container = new Container();
@@ -190,7 +190,6 @@ export class PixiGame {
 
         for (let p = 0; p < this.gameStore.nextPieces.length; p++) {
             const piece = toRaw(this.gameStore.nextPieces[p]);
-            console.dir(piece);
             if (piece.pieceIdx === undefined) continue;
 
             const pieceMatrix = piece.matrix;
@@ -241,13 +240,11 @@ export class PixiGame {
     }
 
     checkIfPieceFits(pieceContainer, gridX, gridY) {
-        console.dir(pieceContainer);
         const pieceMatrix = pieceContainer.piece.matrix;
         try {
             for (let r = 0; r < pieceMatrix.length; r++) {
                 for (let c = 0; c < pieceMatrix[r].length; c++) {
                     if (pieceMatrix[r][c] != 0) {
-                        console.log(`Checking for free space at ROW: ${gridY + r} COL: ${gridX + c} => ${this.gameStore.field[gridY + r][gridX + c]}`);
                         if (this.gameStore.field[gridY + r][gridX + c] != 0) return false;
                     }
                 }
@@ -292,9 +289,9 @@ export class PixiGame {
         const gridX = Math.round((this.dragTarget.x - this.FIELD_BORDER_STROKE_WIDTH) / this.BLOCK_SIDE);
         const gridY = Math.round((this.dragTarget.y + this.NEXT_PIECES_Y - this.FIELD_Y - this.FIELD_BORDER_STROKE_WIDTH) / this.BLOCK_SIDE);
 
-        console.log("Trying to place at", gridX, gridY);
+        // console.log("Trying to place at", gridX, gridY);
         let doesItFit = this.checkIfPieceFits(this.dragTarget, gridX, gridY);
-        console.log(doesItFit);
+        // console.log(doesItFit);
 
         if(doesItFit) {
             this.placePieceInField(this.dragTarget, gridX, gridY);
