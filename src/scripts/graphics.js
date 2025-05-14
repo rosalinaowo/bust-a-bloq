@@ -154,6 +154,11 @@ export class PixiGame {
         // this.app.renderer.render(ptContainer);
         this.app.stage.addChild(pointsText);
 
+        const resetButton = this.getResetButton();
+        resetButton.x = this.WIDTH - resetButton.width - 5;
+        resetButton.y = 5;
+        this.app.stage.addChild(resetButton);
+
         watch(() => this.gameStore.points, (newPoints) => {
             pointsText.text = `Points: ${newPoints}`;
         });
@@ -179,6 +184,41 @@ export class PixiGame {
 
         this.app.stage.addChild(this.fieldContainer);
         this.app.stage.addChild(this.nextPiecesContainer);
+    }
+
+    getResetButton() {
+        const rectangle = new Graphics();
+        const container = new Container();
+
+        const textStyle = new TextStyle({
+            fontFamily: 'Arial',
+            fontSize: 24,
+            fill: 0xffffff,
+            // stroke: {
+            //     color: 0xff5d35,
+            //     width: 4,
+            //     join: 'round'
+            // }
+        });
+        const resetText = new Text({ text: 'Reset', style: textStyle });
+
+        rectangle.roundRect(0, 0, resetText.width + 15, resetText.height + 10, 5);
+        rectangle.fill({ color: 0xbb2d3b });
+
+        resetText.x = rectangle.width / 2 - resetText.width / 2;
+        resetText.y = rectangle.height / 2 - resetText.height / 2;
+        
+        container.addChild(rectangle);
+        container.addChild(resetText);
+
+        resetText.eventMode = 'static';
+        resetText.cursor = 'pointer';
+        resetText.on('pointerdown', () => {
+            this.gameStore.resetGame();
+            this.updateView();
+        });
+
+        return container;
     }
 
     getNextPiecesContainer() {

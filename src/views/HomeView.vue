@@ -20,33 +20,6 @@ var gameStore = useGameStore();
         </div>
         -----------
       </div>
-      <!-- <button class="btn btn-primary" @click="gameStore.clearLines()">isLineCleared</button> -->
-      <button class="btn btn-primary" @click="gameStore.resetGame();">Reset</button>
     </div>
   </div>
 </template>
-
-<!-- <script setup>
-import { onMounted, onUnmounted, ref } from 'vue';
-import { useGameStore } from '@/stores/gameStore';
-
-const gameContainer = ref(null);
-const { state, initPixiGame, destroyPixiGame } = useGameStore();
-
-onMounted(() => {
-    if (gameContainer.value) {
-        initPixiGame(gameContainer.value);
-    }
-});
-
-onUnmounted(() => {
-    destroyPixiGame();
-});
-</script>
-
-<template>
-    <div ref="gameContainer"></div>
-</template>
-
-<style>
-</style> -->
