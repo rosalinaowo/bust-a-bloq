@@ -54,7 +54,8 @@ export const useGameStore = defineStore('game', () => {
 
     function generateRandomPieces(colorsCount) {
         nextPieces.value = [];
-
+        
+        let nextP = [];
         for (let i = 0; i < nextPiecesAmount.value; i++) {
             const colorIdx = Math.floor(Math.random() * colorsCount) + 1;
             const idx = Math.floor(Math.random() * blocks.value.length);
@@ -67,59 +68,67 @@ export const useGameStore = defineStore('game', () => {
                 matrix: blockCopy
             }
 
-            nextPieces.value.push(nextPiece);
+            nextP.push(nextPiece);
         }
+
+        nextPieces.value = nextP;
     }
-  
+
     function clearLines() {
-        let count = 0;
-        let arrayRighe = [];
-        let arrayColonne = [];
-        const fieldData = field.value;
-
-        for (let i = 0; i < rows.value; i++) { //Controlla ogni riga
-                if(fieldData[i].every((cell) => cell != 0)) { //Se in una riga tutti i numeri sono diversi da 0 la elimina
-                    arrayRighe.push(i);
-                    count++;
-                    points.value += 80;
-                }
-        }
-        
-        for (let j = 0; j < columns.value; j++) { // Controlla ogni colonna
-            let colonna = fieldData.map(row => row[j]); // Estrai la colonna j-esima
-            if (colonna.every(cell => cell != 0)) { // Se tutti i numeri nella colonna sono diversi da 0
-                arrayColonne.push(j); // Salva l'indice della colonna
-                count++;
-                points.value += 80;
-            }
-        }            
-
-        switch (count) {
-            case 0: case 1: break;
-            case 2: case 3: points.value = Math.floor(points.value * pointsMultiplier.value[0]); break;
-            case 4: case 5: points.value = Math.floor(points.value * pointsMultiplier.value[1]); break;
-            default: points.value = Math.floor(points.value * pointsMultiplier.value[2]); break;
-        }
-
-        deleteRowAndColumns(arrayRighe, arrayColonne);
-    }
-
-    function deleteRowAndColumns(righe, colonne){
-        console.dir(righe);
-        console.dir(colonne);
-        if(colonne.length != 0) { //Se c'è una colonna piena
-            for(let nrColonne = 0; nrColonne < colonne.length; nrColonne++) {
-                for(let i = 0; i < rows.value; i++) {
-                    field.value[i][colonne[nrColonne]] = 0;
+        console.time("clearLines");
+    
+        const fieldData = field.value.map(row => [...row]); //Deep copy del campo
+        const fullRows = new Set();
+        const fullCols = new Set();
+        const rowCounts = Array(rows.value).fill(0);
+        const colCounts = Array(columns.value).fill(0);
+        let cellsCount = rows.value * columns.value;
+    
+        // Una sola iterazione su tutto il campo
+        for (let i = 0; i < rows.value; i++) {
+            for (let j = 0; j < columns.value; j++) {
+                if (fieldData[i][j] !== 0) {
+                    rowCounts[i]++;
+                    colCounts[j]++;
                 }
             }
         }
-        if(righe.length != 0) { //Se c'è una riga piena
-            for(let nrRighe = 0; nrRighe < righe.length; nrRighe++) {
-                field.value[righe[nrRighe]].fill(0); // Riempi la riga con 0
+    
+        // Identifica righe e colonne piene
+        for (let i = 0; i < rows.value; i++) {
+            if (rowCounts[i] === columns.value) fullRows.add(i);
+        }
+        for (let j = 0; j < columns.value; j++) {
+            if (colCounts[j] === rows.value) fullCols.add(j);
+        }
+    
+        // Calcolo punti
+        let count = fullRows.size + fullCols.size;
+        points.value += count * 80;
+    
+        if (count >= 2 && count <= 3) {
+            points.value = Math.floor(points.value * pointsMultiplier.value[0]);
+        } else if (count >= 4 && count <= 5) {
+            points.value = Math.floor(points.value * pointsMultiplier.value[1]);
+        } else if (count > 5) {
+            points.value = Math.floor(points.value * pointsMultiplier.value[2]);
+        }
+    
+        // Cancellazione
+        for (const i of fullRows) {
+            fieldData[i].fill(0);
+        }
+        for (const j of fullCols) {
+            for (let i = 0; i < rows.value; i++) {
+                fieldData[i][j] = 0;
             }
         }
+
+        field.value = fieldData;
+    
+        console.timeEnd("clearLines");
     }
+    
 
     return {
         texturePacks,
@@ -133,7 +142,6 @@ export const useGameStore = defineStore('game', () => {
         points,
         loadExampleGame,
         generateRandomPieces,
-        deleteRowAndColumns,
         clearLines
     }
 });
