@@ -7,13 +7,13 @@ import { reactive, ref } from "vue";
 const exampleGame = {
     "field": [
         [ 1, 1, 1, 1, 1, 0, 6, 6 ],
-        [ 1, 3, 3, 0, 0, 0, 0, 6 ],
-        [ 1, 0, 0, 0, 0, 0, 0, 0 ],
-        [ 0, 0, 0, 0, 0, 0, 0, 0 ],
-        [ 0, 0, 0, 0, 0, 0, 0, 0 ],
-        [ 4, 0, 0, 0, 0, 0, 0, 0 ],
-        [ 4, 0, 0, 0, 0, 0, 0, 0 ],
-        [ 4, 0, 0, 0, 0, 0, 0, 0 ]
+        [ 1, 3, 3, 1, 0, 0, 0, 6 ],
+        [ 1, 1, 1, 1, 1, 0, 1, 1 ],
+        [ 1, 1, 1, 1, 1, 1, 0, 1 ],
+        [ 1, 1, 1, 1, 1, 1, 1, 0 ],
+        [ 0, 1, 1, 4, 0, 1, 1, 1 ],
+        [ 4, 0, 1, 0, 1, 1, 1, 1 ],
+        [ 4, 1, 0, 1, 1, 1, 1, 1 ]
     ]
 }
 
@@ -70,27 +70,82 @@ export const useGameStore = defineStore('game', () => {
         field.value = exampleGame.field.map(row => [...row]);
     }
 
+    // function generateRandomPieces(colorsCount) {
+    //     nextPieces.value = [];
+        
+    //     let nextP = [];
+    //     for (let i = 0; i < nextPiecesAmount.value; i++) {
+    //         const colorIdx = Math.floor(Math.random() * colorsCount) + 1;
+    //         const idx = Math.floor(Math.random() * blocks.value.length);
+    //         const selectedBlock = blocks.value[idx];
+    //         let blockCopy = toRawArray(selectedBlock);
+
+    //         let nextPiece = {
+    //             pieceIdx: i,
+    //             colorIdx: colorIdx,
+    //             matrix: blockCopy
+    //         }
+
+    //         nextP.push(nextPiece);
+    //     }
+
+    //     nextPieces.value = nextP;
+    // }
+
     function generateRandomPieces(colorsCount) {
         nextPieces.value = [];
-        
-        let nextP = [];
+    
         for (let i = 0; i < nextPiecesAmount.value; i++) {
-            const colorIdx = Math.floor(Math.random() * colorsCount) + 1;
-            const idx = Math.floor(Math.random() * blocks.value.length);
-            const selectedBlock = blocks.value[idx];
-            let blockCopy = toRawArray(selectedBlock);
-
-            let nextPiece = {
-                pieceIdx: i,
-                colorIdx: colorIdx,
-                matrix: blockCopy
+            let pieceFound = false;
+            for (let attempt = 0; attempt < blocks.value.length; attempt++) {
+                const colorIdx = Math.floor(Math.random() * colorsCount) + 1;
+                const idx = Math.floor(Math.random() * blocks.value.length);
+                const selectedBlock = blocks.value[idx];
+                const blockCopy = toRawArray(selectedBlock);
+    
+                if (fitsInField(blockCopy)) {
+                    nextPieces.value.push({
+                        pieceIdx: i,
+                        colorIdx: colorIdx,
+                        matrix: blockCopy,
+                    });
+                    pieceFound = true;
+                    break;
+                }
             }
-
-            nextP.push(nextPiece);
+    
+            if (!pieceFound) {
+                // Fallback: Adjust the previous piece or generate a random one
+                const fallbackPiece = toRawArray(blocks.value[Math.floor(Math.random() * blocks.value.length)]);    
+                nextPieces.value.push({
+                    pieceIdx: i,
+                    colorIdx: Math.floor(Math.random() * colorsCount) + 1,
+                    matrix: fallbackPiece,
+                });
+            }
         }
-
-        nextPieces.value = nextP;
     }
+
+    function fitsInField(piece) {
+        for (let i = 0; i <= rows.value - piece.length; i++) {
+            for (let j = 0; j <= columns.value - piece[0].length; j++) {
+                let fits = true;
+                for (let x = 0; x < piece.length; x++) {
+                    for (let y = 0; y < piece[x].length; y++) {
+                        if (piece[x][y] === 1 && field.value[i + x][j + y] !== 0) {
+                            fits = false;
+                            break;
+                        }
+                    }
+                    if (!fits) break;
+                }
+                if (fits) return true;
+            }
+        }
+        return false;
+    }
+
+
 
     function clearLines() {
         console.time("clearLines");
