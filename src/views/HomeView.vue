@@ -9,6 +9,11 @@ var gameStore = useGameStore();
   <div class="d-flex justify-content-center">
     <GameField></GameField>
     <div class="ms-3">
+      <div>Logged in: {{ gameStore.logged }}</div>
+      <input type="text" v-model="gameStore.username" placeholder="Enter username" />
+      <button @click="gameStore.login()">Login</button>
+      <button @click="gameStore.sendUpdatedField()">Send state</button>
+      <button @click="gameStore.updateOpponentState()">Get opponent state</button>
       <div>Game matrix:</div>
       <div v-for="(row, index) in gameStore.field" :key="index">
         {{ row }}

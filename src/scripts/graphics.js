@@ -71,24 +71,24 @@ export class PixiGame {
     //     }
     // }
 
-    getFieldContainer() {
+    getFieldContainer(mode) {
         const container = new Container();
         const graphics = new Graphics();
 
-        // Border
-        graphics.roundRect(this.FIELD_X, this.FIELD_Y, this.FIELD_BORDER_WIDTH, this.FIELD_BORDER_HEIGHT, this.FIELD_CORNER_RADIUS);
+        graphics.roundRect(0, 0, this.FIELD_BORDER_WIDTH, this.FIELD_BORDER_HEIGHT, this.FIELD_CORNER_RADIUS);
         graphics.stroke({ width: this.FIELD_BORDER_STROKE_WIDTH, color: 0xabe3ff, alignment: 1 });
 
         container.addChild(graphics);
 
-        // Pieces
-        for (let r = 0; r < this.gameStore.field.length; r++) {
-            for (let c = 0; c < this.gameStore.field[r].length; c++) {
-                if (this.gameStore.field[r][c] != 0) {
-                    const texture = Assets.get('block' + (this.gameStore.field[r][c]));
+        let fieldMatrix = mode === 0 ? this.gameStore.field : this.gameStore.opponent.field;
+
+        for (let r = 0; r < fieldMatrix.length; r++) {
+            for (let c = 0; c < fieldMatrix[r].length; c++) {
+                if (fieldMatrix[r][c] != 0) {
+                    const texture = Assets.get('block' + (fieldMatrix[r][c]));
                     const block = Sprite.from(texture);
-                    block.x = c * this.BLOCK_SIDE + this.FIELD_X + this.FIELD_BORDER_STROKE_WIDTH;
-                    block.y = r * this.BLOCK_SIDE + this.FIELD_Y + this.FIELD_BORDER_STROKE_WIDTH;
+                    block.x = c * this.BLOCK_SIDE + this.FIELD_BORDER_STROKE_WIDTH;
+                    block.y = r * this.BLOCK_SIDE + this.FIELD_BORDER_STROKE_WIDTH;
                     block.width = block.height = this.BLOCK_SIDE;
                     container.addChild(block);
                 }
@@ -158,8 +158,16 @@ export class PixiGame {
             pointsText.text = `Points: ${newPoints}`;
         });
 
+        watch(() => this.gameStore.opponent, (opponent) => {
+            if (opponent) {
+                this.updateOpponentView();
+            }
+        });
+
         this.fieldContainer = undefined;
         this.nextPiecesContainer = undefined;
+        this.opponentFieldContainer = undefined;
+
         this.updateView();
     }
 
@@ -171,13 +179,24 @@ export class PixiGame {
         this.app.stage.removeChild(this.fieldContainer);
         this.app.stage.removeChild(this.nextPiecesContainer);
 
-        this.fieldContainer = this.getFieldContainer();
+        this.fieldContainer = this.getFieldContainer(0);
+        this.fieldContainer.x = this.FIELD_X;
+        this.fieldContainer.y = this.FIELD_Y;
         this.nextPiecesContainer = this.getNextPiecesContainer();
         this.nextPiecesContainer.x = this.FIELD_X;
         this.nextPiecesContainer.y = this.NEXT_PIECES_Y;
 
         this.app.stage.addChild(this.fieldContainer);
         this.app.stage.addChild(this.nextPiecesContainer);
+    }
+
+    updateOpponentView() {
+        this.app.stage.removeChild(this.opponentFieldContainer);
+        this.opponentFieldContainer = this.getFieldContainer(1);
+        this.opponentFieldContainer.scale = 0.4;
+        this.opponentFieldContainer.x = 0;
+        this.opponentFieldContainer.y = 100;
+        this.app.stage.addChild(this.opponentFieldContainer);
     }
 
     getResetButton() {

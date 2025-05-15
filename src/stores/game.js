@@ -2,6 +2,7 @@ import { PixiGame } from '@/scripts/graphics';
 import { toRawArray } from "@/scripts/utils";
 import { defineStore } from "pinia";
 import { reactive, ref } from "vue";
+import * as mp from '@/scripts/multiplayer';
 
 // Campo di gioco di esempio
 const exampleGame = {
@@ -51,6 +52,10 @@ export const useGameStore = defineStore('game', () => {
     const selectedTexturePack = texturePacks.value[1];
     const blockColorsNumber = ref(0);
     const reset = ref(0);
+
+    const username = ref("");
+    const logged = ref(false);
+    const opponent = ref(null);
 
     function initPixiGame(htmlContainer) {
         if (!pixiGame.value) {
@@ -145,8 +150,6 @@ export const useGameStore = defineStore('game', () => {
         return false;
     }
 
-
-
     function clearLines() {
         console.time("clearLines");
     
@@ -201,7 +204,6 @@ export const useGameStore = defineStore('game', () => {
     
         console.timeEnd("clearLines");
     }
-    
 
     function resetGame() {
         points.value = 0;
@@ -213,6 +215,25 @@ export const useGameStore = defineStore('game', () => {
         console.log('RESET VALUE: ' + reset.value);
         reset.value = 0;
         console.log('RESET VALUE:' + reset.value);
+    }
+
+    function login() {
+        if (username.value.length < 1) {
+            console.log('Username required');
+            return;
+        }
+        mp.connect(username.value);
+    }
+
+    function sendUpdatedField() {
+        if (logged.value === true) {
+            mp.sendUpdatedField();
+        }
+    }
+
+    function updateOpponentState() {
+        console.log('Requesting opponent state');
+        mp.getOpponentStatus();
     }
 
     return {
@@ -227,12 +248,18 @@ export const useGameStore = defineStore('game', () => {
         nextPieces,
         points,
         reset,
+        username,
+        logged,
+        opponent,
         initPixiGame,
         destroyPixiGame,
         loadExampleGame,
         generateRandomPieces,
         generateRandomPiecesThatFit,
         clearLines,
-        resetGame
+        resetGame,
+        login,
+        sendUpdatedField,
+        updateOpponentState
     }
 });
