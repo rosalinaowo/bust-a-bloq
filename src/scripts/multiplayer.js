@@ -31,9 +31,30 @@ export function connect(username) {
             gameStore.logged = false;
         }
     });
+
+    socket.on('opponentUpdateField', (data) => {
+        console.log('Received opponent field update');
+        gameStore.opponent = data;
+    });
+}
+
+export function setOpponent(username) {
+    return new Promise((resolve, reject) => {
+        socket.emit('setOpponent', username);
+        socket.once('setOpponentStatus', (status) => {
+            console.log(`Set opponent status: ${status.message}`);
+            switch (status.message) {
+                // case 'userNotFound': reject(false); break;
+                // case 'opponentNotFound': reject(false); break;
+                case 'success': resolve(true); break;
+                default: reject(false); break;
+            }
+        });
+    });
 }
 
 export function sendUpdatedField() {
+    console.log('Sending updated field');
     socket.emit('updateField', {
         field: gameStore.field,
         points: gameStore.points

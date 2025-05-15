@@ -54,6 +54,7 @@ export const useGameStore = defineStore('game', () => {
     const reset = ref(0);
 
     const username = ref("");
+    const opponentUsername = ref("");
     const logged = ref(false);
     const opponent = ref(null);
 
@@ -203,6 +204,8 @@ export const useGameStore = defineStore('game', () => {
         field.value = fieldData;
     
         console.timeEnd("clearLines");
+
+        sendUpdatedField();
     }
 
     function resetGame() {
@@ -223,6 +226,15 @@ export const useGameStore = defineStore('game', () => {
             return;
         }
         mp.connect(username.value);
+    }
+
+    function setOpponent() {
+        mp.setOpponent(opponentUsername.value)
+            .then((result) => {
+                console.log('Opponent set to: ' + opponentUsername.value);
+            }).catch((error) => {
+                console.log('Error setting opponent: ' + error);
+            });
     }
 
     function sendUpdatedField() {
@@ -249,6 +261,7 @@ export const useGameStore = defineStore('game', () => {
         points,
         reset,
         username,
+        opponentUsername,
         logged,
         opponent,
         initPixiGame,
@@ -259,6 +272,7 @@ export const useGameStore = defineStore('game', () => {
         clearLines,
         resetGame,
         login,
+        setOpponent,
         sendUpdatedField,
         updateOpponentState
     }
