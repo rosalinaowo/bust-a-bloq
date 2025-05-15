@@ -307,7 +307,7 @@ export class PixiGame {
         }
 
         this.gameStore.nextPieces[this.dragTarget.piece.pieceIdx] = [];
-        if (this.gameStore.nextPieces[0].length == 0 && this.gameStore.nextPieces[1].length == 0 && this.gameStore.nextPieces[2].length == 0) this.gameStore.generateRandomPieces(this.BLOCK_COLORS_NUMBER);
+        if (this.gameStore.nextPieces[0].length == 0 && this.gameStore.nextPieces[1].length == 0 && this.gameStore.nextPieces[2].length == 0) this.gameStore.generateRandomPiecesThatFit(this.BLOCK_COLORS_NUMBER);
         //this.updateView();
     }
 
