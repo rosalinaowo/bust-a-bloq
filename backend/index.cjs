@@ -3,15 +3,20 @@ const express = require('express');
 const { createServer } = require('http');
 const { Server } = require('socket.io');
 const Joi = require('joi');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
 const userSchema = Joi.object({
     username: Joi.string().alphanum().min(1).max(30).required(),
+    passwordHash: Joi.string().required(),
+    maxPoints: Joi.number().integer().min(0).required().options({ convert: false }),
+});
+const userUpdateSchema = Joi.object({
     maxPoints: Joi.number().integer().min(0).required().options({ convert: false }),
 });
 
-const PORT = 3000;
+const confPath = './config.json';
 const dbPath = './db.json';
-const dbPwd = '1234';
 const app = express().use(express.json());
 const server = createServer(app);
 const io = new Server(server, {
@@ -22,7 +27,17 @@ const io = new Server(server, {
 const usersBySocket = new Map();
 const socketByUsername = new Map();
 var games = [];
+const config = getConfig();
 var db = {};
+const saltRounds = 10;
+
+function getConfig() {
+    if (!fs.existsSync(confPath)) {
+        console.error(`Config file not found at ${confPath}`);
+        process.exit(1);
+    }
+    return JSON.parse(fs.readFileSync(confPath));
+}
 
 function getData() {
     if (!fs.existsSync(dbPath)) {
@@ -160,52 +175,123 @@ io.on('connection', (socket) => {
 //                      HTTP stuff
 // -----------------------------------------------------------
 
-app.get('/api/users', (req, res) => {
-    const { p } = req.query;
-    if (p !== dbPwd) {
+app.post('/api/users', (req, res) => {
+    const { dbPassword } = req.body;
+    if (dbPassword !== config.DB_PASSWORD) {
         return res.status(401).json({ message: 'Unauthorized' });
     }
     res.json(db.users);
 });
 
-app.get('/api/user', (req, res) => {
-    const { username } = req.query;
+app.delete('/api/user', (req, res) => {
+    const { dbPassword, username } = req.body;
+    if (dbPassword !== config.DB_PASSWORD) {
+        return res.status(401).json({ message: 'Unauthorized' });
+    }
+
     if (!username) {
         return res.status(400).json({ message: 'Username is required' });
     }
 
-    const user = db.users.find(u => u.username === username);
+    const userIndex = db.users.findIndex(u => u.username === username);
+    if (userIndex === -1) {
+        return res.status(404).json({ message: 'User not found' });
+    }
+
+    db.users.splice(userIndex, 1);
+    saveData();
+    res.json({ message: 'User deleted successfully' });
+});
+
+app.get('/api/user', (req, res) => {
+    const { username: requestedUsername } = req.query;
+    if (!requestedUsername) {
+        return res.status(400).json({ message: 'Username is required' });
+    }
+
+    const user = db.users.find(u => u.username === requestedUsername);
     if (!user) {
         return res.status(404).json({ message: 'User not found' });
     }
 
-    res.json(user);
+    const { username, maxPoints } = user || {};
+    const cleanUser = { username, maxPoints };
+
+    res.json(cleanUser);
 });
 
-app.post('/api/user', (req, res) => {
-    const u = {
+app.post('/api/user/register', (req, res) => {
+    const newUser = {
         username: req.body.username,
+        passwordHash: bcrypt.hashSync(req.body.password, saltRounds),
         maxPoints: 0
     }
 
-    const { error, value } = userSchema.validate(u);
+    const user = db.users.find(u => u.username === newUser.username);
+    if (user) {
+        return res.status(409).json({ message: 'Username already taken' });
+    }
+
+    const { error, value } = userSchema.validate(newUser);
     if (error) {
         return res.status(400).json({ message: error.details[0].message });
     }
 
-    const newUser = {
-        username: value.username,
-        maxPoints: value.maxPoints
-    };
-
     db.users.push(newUser);
     saveData();
-    res.status(201).json(newUser);
+
+    const { username, maxPoints } = newUser;
+    const cleanUser = { username, maxPoints };
+
+    res.status(201).json(cleanUser);
 });
 
-app.put('/api/user', (req, res) => {
-    const user = req.body
-    const { error, value } = userSchema.validate(user);
+app.post('/api/user/login', (req, res) => {
+    const { username: requestedUsername, password } = req.body;
+    if (!requestedUsername) {
+        return res.status(400).json({ message: 'Username is required' });
+    }
+
+    const user = db.users.find(u => u.username === requestedUsername);
+    if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+    }
+
+    const match = bcrypt.compareSync(password, user.passwordHash);
+    if (!match) {
+        return res.status(401).json({ message: 'Invalid password' });
+    }
+
+    const token = jwt.sign({ username: user.username }, config.JWT_SECRET, { expiresIn: config.JWT_EXPIRATION });
+    const { username, maxPoints } = user || {};
+    const cleanUser = { token, username, maxPoints };
+
+    res.json(cleanUser);
+});
+
+app.put('/api/user/update', (req, res) => {
+    const authHeader = req.headers.authorization;
+    const user = req.body;
+
+    if (!authHeader) {
+        return res.status(401).json({ message: 'No token provided' });
+    }
+    const token = authHeader.split(' ')[1];
+
+    try {
+        const decoded = jwt.verify(token, config.JWT_SECRET);
+        if (user.username !== decoded.username) {
+            return res.status(403).json({ message: 'Forbidden' });
+        }
+    } catch (err) {
+        return res.status(401).json({ message: 'Invalid token' });
+    }
+
+    const updatedFields = {
+        maxPoints: user.maxPoints
+    };
+
+    const { error, value } = userUpdateSchema.validate(updatedFields);
     if (error) {
         return res.status(400).json({ message: error.details[0].message });
     }
@@ -215,7 +301,7 @@ app.put('/api/user', (req, res) => {
         return res.status(404).json({ message: 'User not found' });
     }
 
-    db.users[userIndex] = user;
+    Object.assign(db.users[userIndex], updatedFields);
     saveData();
     res.json(db.users[userIndex]);
 });
@@ -224,6 +310,6 @@ app.get('/', (req, res) => {
     res.send('Server is running');
 });
 
-server.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+server.listen(config.PORT, () => {
+    console.log(`Server is running on http://localhost:${config.PORT}`);
 });
