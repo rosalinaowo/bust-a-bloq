@@ -4,6 +4,10 @@ import { io } from 'socket.io-client';
 var gameStore = null;
 export var socket;
 
+// -----------------------------------------------------------
+//                   Socket.io stuff
+// -----------------------------------------------------------
+
 export function connect(username) {
     gameStore = useGameStore()
     socket = io('http://localhost:3000');
@@ -68,3 +72,38 @@ export function getOpponentStatus() {
         gameStore.opponent = status;
     });
 }
+
+// -----------------------------------------------------------
+//                   Fetch stuff
+// -----------------------------------------------------------
+
+export async function login(username, password) {
+    const response = await fetch('/api/user/login', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ username, password })
+    });
+
+    if (response.ok) {
+        const data = await response.json();
+        localStorage.setItem('jwt', data.token);
+        gameStore.username = username;
+        return true;
+    }
+
+    return false;
+}
+
+/*
+const token = localStorage.getItem('jwt');
+fetch('/api/update', {
+  method: 'PUT',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer ' + token
+  },
+  body: JSON.stringify(userData)
+});
+*/
