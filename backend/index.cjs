@@ -1,9 +1,18 @@
+const fs = require('fs');
 const express = require('express');
 const { createServer } = require('http');
 const { Server } = require('socket.io');
+const Joi = require('joi');
+
+const userSchema = Joi.object({
+    username: Joi.string().alphanum().min(1).max(30).required(),
+    maxPoints: Joi.number().integer().min(0).required().options({ convert: false }),
+});
 
 const PORT = 3000;
-const app = express();
+const dbPath = './db.json';
+const dbPwd = '1234';
+const app = express().use(express.json());
 const server = createServer(app);
 const io = new Server(server, {
     cors: {
@@ -13,6 +22,22 @@ const io = new Server(server, {
 const usersBySocket = new Map();
 const socketByUsername = new Map();
 var games = [];
+var db = {};
+
+function getData() {
+    if (!fs.existsSync(dbPath)) {
+        fs.writeFileSync(dbPath, JSON.stringify({ users: [] }, null, 2));
+    }
+    return JSON.parse(fs.readFileSync(dbPath));
+}
+
+function saveData() {
+    fs.writeFile(dbPath, JSON.stringify(db, null, 2), (err) => {
+        if (err) console.error(err);
+    });
+}
+
+db = getData();
 
 function addGame(p1Username, p2Username) {
     games.push({
@@ -38,6 +63,10 @@ function getOpponent(username) {
     if (!game) return null;
     return game.p1 === username ? game.p2 : game.p1;
 }
+
+// -----------------------------------------------------------
+//                   Socket.io stuff
+// -----------------------------------------------------------
 
 io.on('connection', (socket) => {
     console.log(`[C] ${socket.id}`);
@@ -125,6 +154,70 @@ io.on('connection', (socket) => {
             field: Array.from({ length: 8 }, () => Array.from({ length: 8 }, () => Math.floor(Math.random() * 7) + 1))
         });
     });
+});
+
+// -----------------------------------------------------------
+//                      HTTP stuff
+// -----------------------------------------------------------
+
+app.get('/api/users', (req, res) => {
+    const { p } = req.query;
+    if (p !== dbPwd) {
+        return res.status(401).json({ message: 'Unauthorized' });
+    }
+    res.json(db.users);
+});
+
+app.get('/api/user', (req, res) => {
+    const { username } = req.query;
+    if (!username) {
+        return res.status(400).json({ message: 'Username is required' });
+    }
+
+    const user = db.users.find(u => u.username === username);
+    if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.json(user);
+});
+
+app.post('/api/user', (req, res) => {
+    const u = {
+        username: req.body.username,
+        maxPoints: 0
+    }
+
+    const { error, value } = userSchema.validate(u);
+    if (error) {
+        return res.status(400).json({ message: error.details[0].message });
+    }
+
+    const newUser = {
+        username: value.username,
+        maxPoints: value.maxPoints
+    };
+
+    db.users.push(newUser);
+    saveData();
+    res.status(201).json(newUser);
+});
+
+app.put('/api/user', (req, res) => {
+    const user = req.body
+    const { error, value } = userSchema.validate(user);
+    if (error) {
+        return res.status(400).json({ message: error.details[0].message });
+    }
+    
+    const userIndex = db.users.findIndex(u => u.username === user.username);
+    if (userIndex === -1) {
+        return res.status(404).json({ message: 'User not found' });
+    }
+
+    db.users[userIndex] = user;
+    saveData();
+    res.json(db.users[userIndex]);
 });
 
 app.get('/', (req, res) => {
