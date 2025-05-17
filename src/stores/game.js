@@ -100,6 +100,7 @@ export const useGameStore = defineStore('game', () => {
 
     function generateRandomPiecesThatFit(colorsCount) {
         nextPieces.value = [];
+        const fittingPieces = ref(findPiecesThatFit());
     
         for (let i = 0; i < nextPiecesAmount.value; i++) {
             let pieceFound = false;
@@ -108,8 +109,10 @@ export const useGameStore = defineStore('game', () => {
                 const idx = Math.floor(Math.random() * blocks.value.length);
                 const selectedBlock = blocks.value[idx];
                 const blockCopy = toRawArray(selectedBlock);
+                console.log('Attempting to fit piece: ', blockCopy);
     
-                if (fitsInField(blockCopy)) {
+                if (idx == fittingPieces.value[i].pieceIdx) {
+                    console.log('Found a fitting piece: ', blockCopy);
                     nextPieces.value.push({
                         pieceIdx: i,
                         colorIdx: colorIdx,
@@ -151,10 +154,35 @@ export const useGameStore = defineStore('game', () => {
         return false;
     }
 
-    function clearLines() {
+    function findPiecesThatFit() {
+        const piecesThatFit = ref([]);
+        for(let i = 0; i < blocks.value.length; i++) {
+            const block = blocks.value[i];
+            const blockCopy = toRawArray(block);
+            if (fitsInField(blockCopy)) {
+                piecesThatFit.value.push({
+                    pieceIdx: i,
+                    matrix: blockCopy
+                });
+            }
+        }
+        console.log('Pieces that fit: ', piecesThatFit.value);
+        return piecesThatFit.value;
+    }
+
+    function clearLines(fieldGiven) {
         console.time("clearLines");
+        var fieldData = null;
+
+        if (!fieldGiven){ // Se non viene passato un campo, usiamo quello di gioco
+            fieldData = field.value.map(row => [...row]); //Deep copy del campo
+        }
+        else
+        { // Se viene passato un campo, usiamo quello
+            fieldData = fieldGiven
+        }
     
-        const fieldData = field.value.map(row => [...row]); //Deep copy del campo
+        
         const fullRows = new Set();
         const fullCols = new Set();
         const rowCounts = Array(rows.value).fill(0);
