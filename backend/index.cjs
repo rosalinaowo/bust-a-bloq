@@ -1,5 +1,6 @@
 const fs = require('fs');
 const express = require('express');
+const cors = require('cors');
 const { createServer } = require('http');
 const { Server } = require('socket.io');
 const Joi = require('joi');
@@ -17,7 +18,7 @@ const userUpdateSchema = Joi.object({
 
 const confPath = './config.json';
 const dbPath = './db.json';
-const app = express().use(express.json());
+const app = express().use(cors).use(express.json());
 const server = createServer(app);
 const io = new Server(server, {
     cors: {

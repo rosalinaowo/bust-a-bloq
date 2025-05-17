@@ -220,7 +220,22 @@ export const useGameStore = defineStore('game', () => {
         console.log('RESET VALUE:' + reset.value);
     }
 
-    function login() {
+    function login(username, password) {
+        mp.login(username.value, password.value)
+            .then((res) => {
+                if (res) {
+                    logged.value = true;
+                    console.log('Logged in as: ' + username.value);
+                    return res.token;
+                } else {
+                    console.log('Login failed');
+                }
+            }).catch((error) => {
+                console.log('Error logging in: ' + error);
+            });
+    }
+
+    function loginWSS() {
         if (username.value.length < 1) {
             console.log('Username required');
             return;
@@ -245,7 +260,7 @@ export const useGameStore = defineStore('game', () => {
 
     function updateOpponentState() {
         console.log('Requesting opponent state');
-        mp.getOpponentStatus();
+        opponent.value = mp.getOpponentStatus();
     }
 
     return {
@@ -272,6 +287,7 @@ export const useGameStore = defineStore('game', () => {
         clearLines,
         resetGame,
         login,
+        loginWSS,
         setOpponent,
         sendUpdatedField,
         updateOpponentState
