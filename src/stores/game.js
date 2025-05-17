@@ -1,3 +1,4 @@
+import { PixiGame } from '@/scripts/graphics';
 import { toRawArray } from "@/scripts/utils";
 import { defineStore } from "pinia";
 import { reactive, ref } from "vue";
@@ -6,18 +7,19 @@ import { reactive, ref } from "vue";
 const exampleGame = {
     "field": [
         [ 1, 1, 1, 1, 1, 0, 6, 6 ],
-        [ 1, 3, 3, 0, 0, 0, 0, 6 ],
-        [ 1, 0, 0, 0, 0, 0, 0, 0 ],
-        [ 0, 0, 0, 0, 0, 0, 0, 0 ],
-        [ 0, 0, 0, 0, 0, 0, 0, 0 ],
-        [ 4, 0, 0, 0, 0, 0, 0, 0 ],
-        [ 4, 0, 0, 0, 0, 0, 0, 0 ],
-        [ 4, 0, 0, 0, 0, 0, 0, 0 ]
+        [ 1, 3, 3, 1, 0, 0, 0, 6 ],
+        [ 1, 1, 1, 1, 1, 0, 1, 1 ],
+        [ 1, 1, 1, 1, 1, 1, 0, 1 ],
+        [ 1, 1, 1, 1, 1, 1, 1, 0 ],
+        [ 0, 1, 1, 4, 0, 1, 1, 1 ],
+        [ 4, 0, 1, 0, 1, 1, 1, 1 ],
+        [ 4, 1, 0, 1, 1, 1, 1, 1 ]
     ]
 }
 
 // Creaiamo ed esportiamo uno store, lo usamio per gestire lo stato dell'app
 export const useGameStore = defineStore('game', () => {
+    var pixiGame = ref(null);
     const blocks = ref([
         [[1, 1]], // 2x1
         [[1, 1, 1]], // 3x1
@@ -48,81 +50,158 @@ export const useGameStore = defineStore('game', () => {
     const texturePacks = ref([ 'default', 'blockMC' ]);
     const selectedTexturePack = texturePacks.value[1];
     const blockColorsNumber = ref(0);
-    const reset = ref(false);
+    const reset = ref(0);
+
+    function initPixiGame(htmlContainer) {
+        if (!pixiGame.value) {
+            pixiGame.value = new PixiGame(htmlContainer);
+        }
+    }
+
+    function destroyPixiGame() {
+        if (pixiGame.value) {
+            pixiGame.value.destroy();
+            pixiGame.value = null;
+        }
+    }
 
     function loadExampleGame() {
         //field.value = exampleGame.field;
         field.value = exampleGame.field.map(row => [...row]);
     }
 
+    // function generateRandomPieces(colorsCount) {
+    //     nextPieces.value = [];
+        
+    //     let nextP = [];
+    //     for (let i = 0; i < nextPiecesAmount.value; i++) {
+    //         const colorIdx = Math.floor(Math.random() * colorsCount) + 1;
+    //         const idx = Math.floor(Math.random() * blocks.value.length);
+    //         const selectedBlock = blocks.value[idx];
+    //         let blockCopy = toRawArray(selectedBlock);
+
+    //         let nextPiece = {
+    //             pieceIdx: i,
+    //             colorIdx: colorIdx,
+    //             matrix: blockCopy
+    //         }
+
+    //         nextP.push(nextPiece);
+    //     }
+
+    //     nextPieces.value = nextP;
+    // }
+
     function generateRandomPieces(colorsCount) {
         nextPieces.value = [];
-
+    
         for (let i = 0; i < nextPiecesAmount.value; i++) {
-            const colorIdx = Math.floor(Math.random() * colorsCount) + 1;
-            const idx = Math.floor(Math.random() * blocks.value.length);
-            const selectedBlock = blocks.value[idx];
-            let blockCopy = toRawArray(selectedBlock);
-
-            let nextPiece = {
-                pieceIdx: i,
-                colorIdx: colorIdx,
-                matrix: blockCopy
+            let pieceFound = false;
+            for (let attempt = 0; attempt < blocks.value.length; attempt++) {
+                const colorIdx = Math.floor(Math.random() * colorsCount) + 1;
+                const idx = Math.floor(Math.random() * blocks.value.length);
+                const selectedBlock = blocks.value[idx];
+                const blockCopy = toRawArray(selectedBlock);
+    
+                if (fitsInField(blockCopy)) {
+                    nextPieces.value.push({
+                        pieceIdx: i,
+                        colorIdx: colorIdx,
+                        matrix: blockCopy,
+                    });
+                    pieceFound = true;
+                    break;
+                }
             }
-
-            nextPieces.value.push(nextPiece);
+    
+            if (!pieceFound) {
+                // Fallback: Adjust the previous piece or generate a random one
+                const fallbackPiece = toRawArray(blocks.value[Math.floor(Math.random() * blocks.value.length)]);    
+                nextPieces.value.push({
+                    pieceIdx: i,
+                    colorIdx: Math.floor(Math.random() * colorsCount) + 1,
+                    matrix: fallbackPiece,
+                });
+            }
         }
     }
-  
+
+    function fitsInField(piece) {
+        for (let i = 0; i <= rows.value - piece.length; i++) {
+            for (let j = 0; j <= columns.value - piece[0].length; j++) {
+                let fits = true;
+                for (let x = 0; x < piece.length; x++) {
+                    for (let y = 0; y < piece[x].length; y++) {
+                        if (piece[x][y] === 1 && field.value[i + x][j + y] !== 0) {
+                            fits = false;
+                            break;
+                        }
+                    }
+                    if (!fits) break;
+                }
+                if (fits) return true;
+            }
+        }
+        return false;
+    }
+
+
+
     function clearLines() {
-        let count = 0;
-        let arrayRighe = [];
-        let arrayColonne = [];
-        const fieldData = field.value;
-
-        for (let i = 0; i < rows.value; i++) { //Controlla ogni riga
-                if(fieldData[i].every((cell) => cell != 0)) { //Se in una riga tutti i numeri sono diversi da 0 la elimina
-                    arrayRighe.push(i);
-                    count++;
-                    points.value += 80;
-                }
-        }
-        
-        for (let j = 0; j < columns.value; j++) { // Controlla ogni colonna
-            let colonna = fieldData.map(row => row[j]); // Estrai la colonna j-esima
-            if (colonna.every(cell => cell != 0)) { // Se tutti i numeri nella colonna sono diversi da 0
-                arrayColonne.push(j); // Salva l'indice della colonna
-                count++;
-                points.value += 80;
-            }
-        }            
-
-        switch (count) {
-            case 0: case 1: break;
-            case 2: case 3: points.value = Math.floor(points.value * pointsMultiplier.value[0]); break;
-            case 4: case 5: points.value = Math.floor(points.value * pointsMultiplier.value[1]); break;
-            default: points.value = Math.floor(points.value * pointsMultiplier.value[2]); break;
-        }
-
-        deleteRowAndColumns(arrayRighe, arrayColonne);
-    }
-
-    function deleteRowAndColumns(righe, colonne){
-        console.dir(righe);
-        console.dir(colonne);
-        if(colonne.length != 0) { //Se c'è una colonna piena
-            for(let nrColonne = 0; nrColonne < colonne.length; nrColonne++) {
-                for(let i = 0; i < rows.value; i++) {
-                    field.value[i][colonne[nrColonne]] = 0;
+        console.time("clearLines");
+    
+        const fieldData = field.value.map(row => [...row]); //Deep copy del campo
+        const fullRows = new Set();
+        const fullCols = new Set();
+        const rowCounts = Array(rows.value).fill(0);
+        const colCounts = Array(columns.value).fill(0);
+        let cellsCount = rows.value * columns.value;
+    
+        // Una sola iterazione su tutto il campo
+        for (let i = 0; i < rows.value; i++) {
+            for (let j = 0; j < columns.value; j++) {
+                if (fieldData[i][j] !== 0) {
+                    rowCounts[i]++;
+                    colCounts[j]++;
                 }
             }
         }
-        if(righe.length != 0) { //Se c'è una riga piena
-            for(let nrRighe = 0; nrRighe < righe.length; nrRighe++) {
-                field.value[righe[nrRighe]].fill(0); // Riempi la riga con 0
+    
+        // Identifica righe e colonne piene
+        for (let i = 0; i < rows.value; i++) {
+            if (rowCounts[i] === columns.value) fullRows.add(i);
+        }
+        for (let j = 0; j < columns.value; j++) {
+            if (colCounts[j] === rows.value) fullCols.add(j);
+        }
+    
+        // Calcolo punti
+        let count = fullRows.size + fullCols.size;
+        points.value += count * 80;
+    
+        if (count >= 2 && count <= 3) {
+            points.value = Math.floor(points.value * pointsMultiplier.value[0]);
+        } else if (count >= 4 && count <= 5) {
+            points.value = Math.floor(points.value * pointsMultiplier.value[1]);
+        } else if (count > 5) {
+            points.value = Math.floor(points.value * pointsMultiplier.value[2]);
+        }
+    
+        // Cancellazione
+        for (const i of fullRows) {
+            fieldData[i].fill(0);
+        }
+        for (const j of fullCols) {
+            for (let i = 0; i < rows.value; i++) {
+                fieldData[i][j] = 0;
             }
         }
+
+        field.value = fieldData;
+    
+        console.timeEnd("clearLines");
     }
+    
 
     function resetGame() {
         points.value = 0;
@@ -130,10 +209,14 @@ export const useGameStore = defineStore('game', () => {
         nextPieces.value = [];
         loadExampleGame();
         generateRandomPieces(blockColorsNumber.value);
-        reset.value = true;
+        reset.value = 1;
+        console.log('RESET VALUE: ' + reset.value);
+        reset.value = 0;
+        console.log('RESET VALUE:' + reset.value);
     }
 
     return {
+        pixiGame,
         texturePacks,
         selectedTexturePack,
         blockColorsNumber,
@@ -145,9 +228,10 @@ export const useGameStore = defineStore('game', () => {
         nextPieces,
         points,
         reset,
+        initPixiGame,
+        destroyPixiGame,
         loadExampleGame,
         generateRandomPieces,
-        deleteRowAndColumns,
         clearLines,
         resetGame
     }
