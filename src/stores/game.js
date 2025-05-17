@@ -2,18 +2,19 @@ import { PixiGame } from '@/scripts/graphics';
 import { toRawArray } from "@/scripts/utils";
 import { defineStore } from "pinia";
 import { reactive, ref } from "vue";
+import * as mp from '@/scripts/multiplayer';
 
 // Campo di gioco di esempio
 const exampleGame = {
     "field": [
         [ 1, 1, 1, 1, 1, 0, 6, 6 ],
-        [ 1, 3, 3, 1, 0, 0, 0, 6 ],
-        [ 1, 1, 1, 1, 1, 0, 1, 1 ],
-        [ 1, 1, 1, 1, 1, 1, 0, 1 ],
-        [ 1, 1, 1, 1, 1, 1, 1, 0 ],
-        [ 0, 1, 1, 4, 0, 1, 1, 1 ],
-        [ 4, 0, 1, 0, 1, 1, 1, 1 ],
-        [ 4, 1, 0, 1, 1, 1, 1, 1 ]
+        [ 1, 3, 3, 0, 0, 0, 0, 6 ],
+        [ 1, 0, 0, 0, 0, 0, 0, 0 ],
+        [ 0, 0, 0, 0, 0, 0, 0, 0 ],
+        [ 0, 0, 0, 0, 0, 0, 0, 0 ],
+        [ 4, 0, 0, 0, 0, 0, 0, 0 ],
+        [ 4, 0, 0, 0, 0, 0, 0, 0 ],
+        [ 4, 0, 0, 0, 0, 0, 0, 0 ]
     ]
 }
 
@@ -44,13 +45,18 @@ export const useGameStore = defineStore('game', () => {
     const nextPiecesAmount = ref(3);
     const field = ref(Array.from({ length: rows.value }, () => Array.from({ length: columns.value }, () => 0)));
     //const fieldSprites = ref(Array.from({ length: rows.value }, () => Array.from({ length: columns.value }, () => null)));
-    const fieldSprites = ref([]);
+    //const fieldSprites = ref([]);
     const nextPieces = ref([]);
 
     const texturePacks = ref([ 'default', 'blockMC' ]);
     const selectedTexturePack = texturePacks.value[1];
     const blockColorsNumber = ref(0);
     const reset = ref(0);
+
+    const username = ref("");
+    const opponentUsername = ref("");
+    const logged = ref(false);
+    const opponent = ref(null);
 
     function initPixiGame(htmlContainer) {
         if (!pixiGame.value) {
@@ -70,29 +76,29 @@ export const useGameStore = defineStore('game', () => {
         field.value = exampleGame.field.map(row => [...row]);
     }
 
-    // function generateRandomPieces(colorsCount) {
-    //     nextPieces.value = [];
+    function generateRandomPieces(colorsCount) { // Completely random
+        nextPieces.value = [];
         
-    //     let nextP = [];
-    //     for (let i = 0; i < nextPiecesAmount.value; i++) {
-    //         const colorIdx = Math.floor(Math.random() * colorsCount) + 1;
-    //         const idx = Math.floor(Math.random() * blocks.value.length);
-    //         const selectedBlock = blocks.value[idx];
-    //         let blockCopy = toRawArray(selectedBlock);
+        let nextP = [];
+        for (let i = 0; i < nextPiecesAmount.value; i++) {
+            const colorIdx = Math.floor(Math.random() * colorsCount) + 1;
+            const idx = Math.floor(Math.random() * blocks.value.length);
+            const selectedBlock = blocks.value[idx];
+            let blockCopy = toRawArray(selectedBlock);
 
-    //         let nextPiece = {
-    //             pieceIdx: i,
-    //             colorIdx: colorIdx,
-    //             matrix: blockCopy
-    //         }
+            let nextPiece = {
+                pieceIdx: i,
+                colorIdx: colorIdx,
+                matrix: blockCopy
+            }
 
-    //         nextP.push(nextPiece);
-    //     }
+            nextP.push(nextPiece);
+        }
 
-    //     nextPieces.value = nextP;
-    // }
+        nextPieces.value = nextP;
+    }
 
-    function generateRandomPieces(colorsCount) {
+    function generateRandomPiecesThatFit(colorsCount) {
         nextPieces.value = [];
     
         for (let i = 0; i < nextPiecesAmount.value; i++) {
@@ -144,8 +150,6 @@ export const useGameStore = defineStore('game', () => {
         }
         return false;
     }
-
-
 
     function clearLines() {
         console.time("clearLines");
@@ -200,19 +204,48 @@ export const useGameStore = defineStore('game', () => {
         field.value = fieldData;
     
         console.timeEnd("clearLines");
+
+        sendUpdatedField();
     }
-    
 
     function resetGame() {
         points.value = 0;
         field.value = Array.from({ length: rows.value }, () => Array.from({ length: columns.value }, () => 0));
         nextPieces.value = [];
         loadExampleGame();
-        generateRandomPieces(blockColorsNumber.value);
+        generateRandomPiecesThatFit(blockColorsNumber.value);
         reset.value = 1;
         console.log('RESET VALUE: ' + reset.value);
         reset.value = 0;
         console.log('RESET VALUE:' + reset.value);
+    }
+
+    function login() {
+        if (username.value.length < 1) {
+            console.log('Username required');
+            return;
+        }
+        mp.connect(username.value);
+    }
+
+    function setOpponent() {
+        mp.setOpponent(opponentUsername.value)
+            .then((result) => {
+                console.log('Opponent set to: ' + opponentUsername.value);
+            }).catch((error) => {
+                console.log('Error setting opponent: ' + error);
+            });
+    }
+
+    function sendUpdatedField() {
+        if (logged.value === true) {
+            mp.sendUpdatedField();
+        }
+    }
+
+    function updateOpponentState() {
+        console.log('Requesting opponent state');
+        mp.getOpponentStatus();
     }
 
     return {
@@ -224,15 +257,23 @@ export const useGameStore = defineStore('game', () => {
         rows,
         columns,
         field,
-        fieldSprites,
         nextPieces,
         points,
         reset,
+        username,
+        opponentUsername,
+        logged,
+        opponent,
         initPixiGame,
         destroyPixiGame,
         loadExampleGame,
         generateRandomPieces,
+        generateRandomPiecesThatFit,
         clearLines,
-        resetGame
+        resetGame,
+        login,
+        setOpponent,
+        sendUpdatedField,
+        updateOpponentState
     }
 });

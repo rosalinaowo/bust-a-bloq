@@ -1,4 +1,4 @@
-import { Application, Assets, Container, FillGradient, Graphics, GraphicsContext, nextPow2, Sprite, Text, TextStyle, TilingSprite, SCALE_MODES, Ticker } from "pixi.js";
+import { Application, Assets, Container, Graphics, Sprite, Text, TextStyle, SCALE_MODES } from "pixi.js";
 import { useGameStore } from "@/stores/game";
 import { toRaw, watch } from "vue";
 
@@ -25,8 +25,6 @@ export class PixiGame {
         this.BLOCK_SIDE = 50;
 
         this.gameStore.blockColorsNumber = this.BLOCK_COLORS_NUMBER;
-        // this.gameStore.loadExampleGame();
-        // this.gameStore.generateRandomPieces(this.BLOCK_COLORS_NUMBER);
         this.gameStore.resetGame();
 
         this.dragTarget = null;
@@ -73,24 +71,24 @@ export class PixiGame {
     //     }
     // }
 
-    getFieldContainer() {
+    getFieldContainer(mode) {
         const container = new Container();
         const graphics = new Graphics();
 
-        // Border
-        graphics.roundRect(this.FIELD_X, this.FIELD_Y, this.FIELD_BORDER_WIDTH, this.FIELD_BORDER_HEIGHT, this.FIELD_CORNER_RADIUS);
+        graphics.roundRect(0, 0, this.FIELD_BORDER_WIDTH, this.FIELD_BORDER_HEIGHT, this.FIELD_CORNER_RADIUS);
         graphics.stroke({ width: this.FIELD_BORDER_STROKE_WIDTH, color: 0xabe3ff, alignment: 1 });
 
         container.addChild(graphics);
 
-        // Pieces
-        for (let r = 0; r < this.gameStore.field.length; r++) {
-            for (let c = 0; c < this.gameStore.field[r].length; c++) {
-                if (this.gameStore.field[r][c] != 0) {
-                    const texture = Assets.get('block' + (this.gameStore.field[r][c]));
+        let fieldMatrix = mode === 0 ? this.gameStore.field : this.gameStore.opponent.field;
+
+        for (let r = 0; r < fieldMatrix.length; r++) {
+            for (let c = 0; c < fieldMatrix[r].length; c++) {
+                if (fieldMatrix[r][c] != 0) {
+                    const texture = Assets.get('block' + (fieldMatrix[r][c]));
                     const block = Sprite.from(texture);
-                    block.x = c * this.BLOCK_SIDE + this.FIELD_X + this.FIELD_BORDER_STROKE_WIDTH;
-                    block.y = r * this.BLOCK_SIDE + this.FIELD_Y + this.FIELD_BORDER_STROKE_WIDTH;
+                    block.x = c * this.BLOCK_SIDE + this.FIELD_BORDER_STROKE_WIDTH;
+                    block.y = r * this.BLOCK_SIDE + this.FIELD_BORDER_STROKE_WIDTH;
                     block.width = block.height = this.BLOCK_SIDE;
                     container.addChild(block);
                 }
@@ -135,35 +133,42 @@ export class PixiGame {
         titleText.y = 0;
         this.app.stage.addChild(titleText);
 
-        // const ptContainer = new Container({
-        //     isRenderGroup: true
-        // })
-
-        const pointsText = new Text({ text: `Points: ${this.gameStore.points}`, style: titleTextStyle });
+        const pointsTextStyle = new TextStyle({
+            fontFamily: 'Arial',
+            fontSize: 36,
+            fill: 0xffffff,
+            // stroke: {
+            //     color: 0xde3249,
+            //     width: 4,
+            //     join: 'round'
+            // }
+        });
+        const pointsText = new Text({ text: `Points: ${this.gameStore.points}`, style: pointsTextStyle });
         pointsText.x = 5;
         pointsText.y = 0;
 
-        // const pointsTicker = new Ticker();
-        // pointsTicker.add(() => {
-        //     pointsText.text = `Points: ${this.gameStore.points}`;
-        // });
-        // pointsTicker.start();
-        
-        //ptContainer.addChild(pointsText);
-        // this.app.stage.addChild(ptContainer);
-        // this.app.renderer.render(ptContainer);
         this.app.stage.addChild(pointsText);
+
+        const resetButton = this.getResetButton();
+        resetButton.x = pointsText.x;
+        resetButton.y = pointsText.y + pointsText.height + 5;
+        this.app.stage.addChild(resetButton);
 
         watch(() => this.gameStore.points, (newPoints) => {
             pointsText.text = `Points: ${newPoints}`;
         });
 
+        watch(() => this.gameStore.opponent, (opponent) => {
+            if (opponent) {
+                this.updateOpponentView();
+            }
+        });
 
-        this.fieldContainer = this.getFieldContainer();
-        this.nextPiecesContainer = this.getNextPiecesContainer();
+        this.fieldContainer = undefined;
+        this.nextPiecesContainer = undefined;
+        this.opponentFieldContainer = undefined;
 
-        this.app.stage.addChild(this.fieldContainer);
-        this.app.stage.addChild(this.nextPiecesContainer);
+        this.updateView();
     }
 
     destroy() {
@@ -174,17 +179,66 @@ export class PixiGame {
         this.app.stage.removeChild(this.fieldContainer);
         this.app.stage.removeChild(this.nextPiecesContainer);
 
-        this.fieldContainer = this.getFieldContainer();
+        this.fieldContainer = this.getFieldContainer(0);
+        this.fieldContainer.x = this.FIELD_X;
+        this.fieldContainer.y = this.FIELD_Y;
         this.nextPiecesContainer = this.getNextPiecesContainer();
+        this.nextPiecesContainer.x = this.FIELD_X;
+        this.nextPiecesContainer.y = this.NEXT_PIECES_Y;
 
         this.app.stage.addChild(this.fieldContainer);
         this.app.stage.addChild(this.nextPiecesContainer);
     }
 
+    updateOpponentView() {
+        this.app.stage.removeChild(this.opponentFieldContainer);
+        this.opponentFieldContainer = this.getFieldContainer(1);
+        this.opponentFieldContainer.scale = 0.4;
+        this.opponentFieldContainer.x = 0;
+        this.opponentFieldContainer.y = 100;
+        this.app.stage.addChild(this.opponentFieldContainer);
+    }
+
+    getResetButton() {
+        const rectangle = new Graphics();
+        const container = new Container();
+
+        const textStyle = new TextStyle({
+            fontFamily: 'Arial',
+            fontSize: 24,
+            fill: 0xffffff,
+            // stroke: {
+            //     color: 0xff5d35,
+            //     width: 4,
+            //     join: 'round'
+            // }
+        });
+        const resetText = new Text({ text: 'Reset', style: textStyle });
+        resetText.eventMode = 'none';
+
+        rectangle.roundRect(0, 0, resetText.width + 15, resetText.height + 10, 5);
+        rectangle.fill({ color: 0xbb2d3b });
+
+        resetText.x = rectangle.width / 2 - resetText.width / 2;
+        resetText.y = rectangle.height / 2 - resetText.height / 2;
+        
+        container.addChild(rectangle);
+        container.addChild(resetText);
+
+        rectangle.eventMode = 'static';
+        rectangle.cursor = 'pointer';
+        rectangle.on('pointerdown', () => {
+            this.gameStore.resetGame();
+            this.updateView();
+        });
+
+        return container;
+    }
+
     getNextPiecesContainer() {
         const container = new Container();
-        container.x = this.FIELD_X;
-        container.y = this.NEXT_PIECES_Y;
+        // container.x = this.FIELD_X;
+        // container.y = this.NEXT_PIECES_Y;
 
         let lastPieceWidth = 0;
 
@@ -206,10 +260,6 @@ export class PixiGame {
             pieceContainer.on('pointerdown', (event) => this.onDragStart(event, pieceContainer));
             this.app.stage.on('pointerup', (event) => this.onDragEnd(event));
             this.app.stage.on('pointerupoutside', (event) => this.onDragEnd(event));
-
-
-            // const piece = toRawArray(this.gameStore.nextPieces[p]);
-            // const textureColor = Math.floor(Math.random() * this.BLOCK_COLORS_NUMBER);
             
             for (let r = 0; r < pieceMatrix.length; r++) {
                 let lastBlockX = 0;
@@ -231,8 +281,6 @@ export class PixiGame {
 
             let x = new Text({ text: 'x', style: { fontSize: 16, fill: 0xff0000}});
             pieceContainer.addChild(x);
-
-            //pieceContainer.pivot.set(pieceContainer.width / 2, pieceContainer.height / 2);
             container.addChild(pieceContainer);
         }
 
@@ -267,8 +315,16 @@ export class PixiGame {
         }
 
         this.gameStore.nextPieces[this.dragTarget.piece.pieceIdx] = [];
-        if (this.gameStore.nextPieces[0].length == 0 && this.gameStore.nextPieces[1].length == 0 && this.gameStore.nextPieces[2].length == 0) this.gameStore.generateRandomPieces(this.BLOCK_COLORS_NUMBER);
-        //this.updateView();
+        if (this.gameStore.nextPieces[0].length == 0 &&
+            this.gameStore.nextPieces[1].length == 0 &&
+            this.gameStore.nextPieces[2].length == 0) this.gameStore.generateRandomPiecesThatFit(this.BLOCK_COLORS_NUMBER);
+    }
+
+    getMatrixCoordinates(dragTarget) {
+        const gridX = Math.round((dragTarget.x - this.FIELD_BORDER_STROKE_WIDTH) / this.BLOCK_SIDE);
+        const gridY = Math.round((dragTarget.y + this.NEXT_PIECES_Y - this.FIELD_Y - this.FIELD_BORDER_STROKE_WIDTH) / this.BLOCK_SIDE);
+
+        return { gridX, gridY };
     }
 
     onDragMove(event) {
@@ -281,17 +337,13 @@ export class PixiGame {
         this.dragTarget = piece;  // Store reference to the dragged piece
         this.app.stage.on('pointermove', this.onDragMove, this);
     }
-    
 
     onDragEnd() {
         if (!this.dragTarget) return;
 
-        const gridX = Math.round((this.dragTarget.x - this.FIELD_BORDER_STROKE_WIDTH) / this.BLOCK_SIDE);
-        const gridY = Math.round((this.dragTarget.y + this.NEXT_PIECES_Y - this.FIELD_Y - this.FIELD_BORDER_STROKE_WIDTH) / this.BLOCK_SIDE);
+        const { gridX, gridY } = this.getMatrixCoordinates(this.dragTarget);
 
-        // console.log("Trying to place at", gridX, gridY);
         let doesItFit = this.checkIfPieceFits(this.dragTarget, gridX, gridY);
-        // console.log(doesItFit);
 
         if(doesItFit) {
             this.placePieceInField(this.dragTarget, gridX, gridY);
