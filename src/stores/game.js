@@ -215,24 +215,24 @@ export const useGameStore = defineStore('game', () => {
         loadExampleGame();
         generateRandomPiecesThatFit(blockColorsNumber.value);
         reset.value = 1;
-        console.log('RESET VALUE: ' + reset.value);
         reset.value = 0;
-        console.log('RESET VALUE:' + reset.value);
     }
 
-    function login(username, password) {
-        mp.login(username.value, password.value)
-            .then((res) => {
-                if (res) {
-                    logged.value = true;
-                    console.log('Logged in as: ' + username.value);
-                    return res.token;
-                } else {
-                    console.log('Login failed');
-                }
-            }).catch((error) => {
-                console.log('Error logging in: ' + error);
-            });
+    async function login(username, password) {
+        try {
+            const res = await mp.login(username, password);
+            if (res) {
+                logged.value = true;
+                console.log('Logged in as: ' + username);
+                return res.token;
+            } else {
+                console.log('Login failed');
+                return null;
+            }
+        } catch (error) {
+            console.log('Error logging in: ' + error);
+            return null;
+        }
     }
 
     function loginWSS() {

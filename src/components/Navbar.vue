@@ -15,8 +15,8 @@ export default {
     }
   },
   methods: {
-    login() {
-      let jwt = this.gameStore.login(this.username, this.password);
+    async login() {
+      let jwt = await this.gameStore.login(this.username, this.password);
       if (jwt) {
         localStorage.setItem('token', jwt);
         return true;
@@ -61,11 +61,11 @@ export default {
         <div class="modal-body">
           <div class="mb-3">
             <label for="usernameInput" class="col-form-label">Username:</label>
-            <input v-bind="username" type="text" class="form-control" id="usernameInput">
+            <input v-model="username" type="text" class="form-control" id="usernameInput">
           </div>
           <div class="mb-3">
             <label for="passwordInput" class="col-form-label">Password:</label>
-            <input v-bind="password" type="password" class="form-control" id="passwordInput">
+            <input v-model="password" type="password" class="form-control" id="passwordInput">
           </div>
         </div>
         <div class="modal-footer">
