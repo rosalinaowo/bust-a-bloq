@@ -267,11 +267,43 @@ app.post('/api/user/login', (req, res) => {
 
     const token = jwt.sign({ username: user.username }, config.JWT_SECRET, { expiresIn: config.JWT_EXPIRATION });
     const { username, maxPoints } = user || {};
-    const cleanUser = { token, username, maxPoints };
+    const cleanUser = { jwt: token, username, maxPoints };
 
     console.log(`[L+] ${requestedUsername}`);
 
     res.json(cleanUser);
+});
+
+app.get('/api/user/renewLogin', (req, res) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+        return res.status(401).json({ message: 'No token provided' });
+    }
+    const token = authHeader.split(' ')[1];
+
+    try {
+        const decoded = jwt.verify(token, config.JWT_SECRET);
+        const newToken = jwt.sign({ username: decoded.username }, config.JWT_SECRET, { expiresIn: config.JWT_EXPIRATION });
+        res.json({ jwt: newToken });
+    } catch (err) {
+        return res.status(401).json({ message: 'Invalid token' });
+    }
+});
+
+app.post('/api/user/logout', (req, res) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+        return res.status(401).json({ message: 'No token provided' });
+    }
+    const token = authHeader.split(' ')[1];
+
+    try {
+        const decoded = jwt.verify(token, config.JWT_SECRET);
+        console.log(`[L-] ${decoded.username}`);
+        res.json({ message: 'Logged out successfully' });
+    } catch (err) {
+        return res.status(401).json({ message: 'Invalid token' });
+    }
 });
 
 app.put('/api/user/update', (req, res) => {

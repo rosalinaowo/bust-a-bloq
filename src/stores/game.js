@@ -1,8 +1,9 @@
 import { PixiGame } from '@/scripts/graphics';
-import { toRawArray } from "@/scripts/utils";
+import { toRawArray, isTokenValid } from "@/scripts/utils";
 import { defineStore } from "pinia";
 import { reactive, ref } from "vue";
 import * as mp from '@/scripts/multiplayer';
+import { jwtDecode } from 'jwt-decode';
 
 // Campo di gioco di esempio
 const exampleGame = {
@@ -53,9 +54,9 @@ export const useGameStore = defineStore('game', () => {
     const blockColorsNumber = ref(0);
     const reset = ref(0);
 
-    const username = ref("");
+    const username = ref(isTokenValid() ? jwtDecode(localStorage.getItem('jwt')).username : "");
     const opponentUsername = ref("");
-    const logged = ref(false);
+    const logged = ref(isTokenValid());
     const opponent = ref(null);
 
     function initPixiGame(htmlContainer) {
@@ -223,8 +224,9 @@ export const useGameStore = defineStore('game', () => {
             const res = await mp.login(username, password);
             if (res) {
                 logged.value = true;
+                username.value = res.username;
                 console.log('Logged in as: ' + username);
-                return res.token;
+                return res.jwt;
             } else {
                 console.log('Login failed');
                 return null;
@@ -233,6 +235,16 @@ export const useGameStore = defineStore('game', () => {
             console.log('Error logging in: ' + error);
             return null;
         }
+    }
+
+    function logout() {
+        mp.logout()
+            .then((result) => {
+                logged.value = false;
+                console.log('Logged out');
+            }).catch((error) => {
+                console.log('Error logging out: ' + error);
+            });
     }
 
     function loginWSS() {
@@ -287,6 +299,7 @@ export const useGameStore = defineStore('game', () => {
         clearLines,
         resetGame,
         login,
+        logout,
         loginWSS,
         setOpponent,
         sendUpdatedField,

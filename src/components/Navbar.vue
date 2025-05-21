@@ -1,6 +1,7 @@
 <script>
 import { RouterLink } from 'vue-router'
 import { useGameStore } from '@/stores/game'
+import { isTokenValid } from '@/scripts/utils';
 
 export default {
   name: 'Navbar',
@@ -15,10 +16,11 @@ export default {
     }
   },
   methods: {
+    isTokenValid,
     async login() {
       let jwt = await this.gameStore.login(this.username, this.password);
       if (jwt) {
-        localStorage.setItem('token', jwt);
+        localStorage.setItem('jwt', jwt);
         return true;
       }
       return false;
@@ -43,7 +45,12 @@ export default {
         </div>
       </div>
       <div class="navbar-text">
-        <a class="me-3" style="text-decoration: none;" href="#" data-bs-toggle="modal" data-bs-target="#loginModal">Login/Register</a>
+        <a v-if="!isTokenValid()" class="me-3" style="text-decoration: none;" href="#" data-bs-toggle="modal" data-bs-target="#loginModal">Login/Register</a>
+        <span v-else class="me-3">
+          <a href="#" style="text-decoration: none;">{{ gameStore.username }}</a>
+          <span> – </span>
+          <a @click="gameStore.logout()" href="#" style="text-decoration: none;">Logout</a>
+        </span>
         <a href="https://github.com/rosalinaowo/bust-a-bloq" target="_blank">
           <img src="/github-mark-white.svg" alt="Github repo" width="30" height="auto">
         </a>

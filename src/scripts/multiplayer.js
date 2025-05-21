@@ -1,6 +1,7 @@
 import { useGameStore } from '@/stores/game';
 import { io } from 'socket.io-client';
 
+var endpoint = 'http://localhost:3000/'
 var gameStore = null;
 export var socket;
 
@@ -10,7 +11,7 @@ export var socket;
 
 export function connect(username) {
     gameStore = useGameStore()
-    socket = io('http://localhost:3000');
+    socket = io(endpoint);
 
     socket.on('connect', () => {
         console.log(`Connected to the server with ID: ${socket.id}`);
@@ -78,7 +79,7 @@ export function getOpponentStatus() {
 // -----------------------------------------------------------
 
 export async function login(username, password) {
-    const response = await fetch('http://localhost:3000/api/user/login', {
+    const response = await fetch(endpoint + '/api/user/login', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -88,13 +89,77 @@ export async function login(username, password) {
 
     if (response.ok) {
         const data = await response.json();
-        // localStorage.setItem('jwt', data.token);
-        // gameStore.username = username;
-        // return true;
         return data;
     }
 
     return null;
+}
+
+export async function logout() {
+    const token = localStorage.getItem('jwt');
+    const response = await fetch(endpoint + '/api/user/logout', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+        }
+    });
+
+    if (response.ok) {
+        localStorage.removeItem('jwt');
+        return true;
+    }
+
+    return false;
+}
+
+export async function renewLogin() {
+    const token = localStorage.getItem('jwt');
+    const response = await fetch(endpoint + '/api/user/renewLogin', {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+        }
+    });
+
+    if (response.ok) {
+        const data = await response.json();
+        localStorage.setItem('jwt', data.jwt);
+        return true;
+    }
+
+    return false;
+}
+
+export async function startLoginRenewalTimer() {
+    /* Will implenent this later */
+    /* let renewalTimerId = null;
+
+export async function startLoginRenewalTimer() {
+    // Clear any existing timer
+    if (renewalTimerId) {
+        clearInterval(renewalTimerId);
+    }
+
+    // Set up the interval (14 minutes)
+    renewalTimerId = setInterval(async () => {
+        const success = await renewLogin();
+        if (!success) {
+            clearInterval(renewalTimerId);
+            renewalTimerId = null;
+            console.warn('Token renewal failed, stopping renewal timer.');
+        }
+    }, 14 * 60 * 1000); // 14 minutes in ms
+
+    // Stop timer on page unload
+    window.addEventListener('beforeunload', () => {
+        if (renewalTimerId) {
+            clearInterval(renewalTimerId);
+            renewalTimerId = null;
+        }
+    });
+}*/
 }
 
 /*

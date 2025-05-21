@@ -12,8 +12,7 @@ var gameStore = useGameStore();
     <div class="ms-3">
       <div>Logged in: {{ gameStore.logged }}</div>
       <div>Opponent name: {{ gameStore.opponentUsername }}</div>
-      <input type="text" v-model="gameStore.username" placeholder="Enter username" />
-      <button @click="gameStore.loginWSS()">Login</button>
+      <button @click="gameStore.loginWSS()">Login WSS</button>
       <button @click="gameStore.sendUpdatedField()">Send state</button>
       <button @click="gameStore.updateOpponentState()">Get opponent state</button>
       <br>
