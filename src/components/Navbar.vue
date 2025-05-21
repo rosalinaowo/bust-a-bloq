@@ -2,6 +2,7 @@
 import { RouterLink } from 'vue-router'
 import { useGameStore } from '@/stores/game'
 import { isTokenValid } from '@/scripts/utils';
+import { Modal } from 'bootstrap/dist/js/bootstrap.bundle';
 
 export default {
   name: 'Navbar',
@@ -21,6 +22,12 @@ export default {
       let jwt = await this.gameStore.login(this.username, this.password);
       if (jwt) {
         localStorage.setItem('jwt', jwt);
+        const loginModal = Modal.getInstance(document.getElementById('loginModal'));
+        if (loginModal) {
+          loginModal.hide();
+          this.username = '';
+          this.password = '';
+        }
         return true;
       }
       return false;
@@ -45,7 +52,7 @@ export default {
         </div>
       </div>
       <div class="navbar-text">
-        <a v-if="!isTokenValid()" class="me-3" style="text-decoration: none;" href="#" data-bs-toggle="modal" data-bs-target="#loginModal">Login/Register</a>
+        <a v-if="!gameStore.logged" class="me-3" style="text-decoration: none;" href="#" data-bs-toggle="modal" data-bs-target="#loginModal">Login/Register</a>
         <span v-else class="me-3">
           <a href="#" style="text-decoration: none;">{{ gameStore.username }}</a>
           <span> – </span>

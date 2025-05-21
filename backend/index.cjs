@@ -290,25 +290,9 @@ app.get('/api/user/renewLogin', (req, res) => {
     }
 });
 
-app.post('/api/user/logout', (req, res) => {
+app.put('/api/user/updateStats', (req, res) => {
     const authHeader = req.headers.authorization;
-    if (!authHeader) {
-        return res.status(401).json({ message: 'No token provided' });
-    }
-    const token = authHeader.split(' ')[1];
-
-    try {
-        const decoded = jwt.verify(token, config.JWT_SECRET);
-        console.log(`[L-] ${decoded.username}`);
-        res.json({ message: 'Logged out successfully' });
-    } catch (err) {
-        return res.status(401).json({ message: 'Invalid token' });
-    }
-});
-
-app.put('/api/user/update', (req, res) => {
-    const authHeader = req.headers.authorization;
-    const user = req.body;
+    const newStats = req.body;
 
     if (!authHeader) {
         return res.status(401).json({ message: 'No token provided' });
@@ -317,7 +301,8 @@ app.put('/api/user/update', (req, res) => {
 
     try {
         const decoded = jwt.verify(token, config.JWT_SECRET);
-        if (user.username !== decoded.username) {
+        if (newStats.username !== decoded.username) {
+            console.log(`[F] ${decoded.username} tried to update ${newStats.username}'s stats with token ${token}`);
             return res.status(403).json({ message: 'Forbidden' });
         }
     } catch (err) {
@@ -325,22 +310,26 @@ app.put('/api/user/update', (req, res) => {
     }
 
     const updatedFields = {
-        maxPoints: user.maxPoints
+        maxPoints: newStats.maxPoints
     };
 
     const { error, value } = userUpdateSchema.validate(updatedFields);
     if (error) {
+        console.log(`[F] tried to update stats with invalid data: ${error.details[0].message}`);
         return res.status(400).json({ message: error.details[0].message });
     }
     
-    const userIndex = db.users.findIndex(u => u.username === user.username);
+    const userIndex = db.users.findIndex(u => u.username === newStats.username);
     if (userIndex === -1) {
         return res.status(404).json({ message: 'User not found' });
     }
 
     Object.assign(db.users[userIndex], updatedFields);
     saveData();
-    res.json(db.users[userIndex]);
+
+    const { username, maxPoints } = db.users[userIndex];
+    const cleanUser = { username, maxPoints };
+    res.json(cleanUser);
 });
 
 app.get('/', (req, res) => {

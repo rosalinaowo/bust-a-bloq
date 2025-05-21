@@ -55,9 +55,15 @@ export const useGameStore = defineStore('game', () => {
     const reset = ref(0);
 
     const username = ref(isTokenValid() ? jwtDecode(localStorage.getItem('jwt')).username : "");
+    const user = ref(null);
     const opponentUsername = ref("");
     const logged = ref(isTokenValid());
     const opponent = ref(null);
+
+    if (logged.value) {
+        mp.connectWSS(username.value);
+        fetchUs();
+    }
 
     function initPixiGame(htmlContainer) {
         if (!pixiGame.value) {
@@ -210,6 +216,23 @@ export const useGameStore = defineStore('game', () => {
     }
 
     function resetGame() {
+        if (logged.value && user.value) {
+            if (points.value > user.value.maxPoints) {
+                const stats = { username: user.value.username, maxPoints: points.value };
+                console.dir(stats);
+                mp.updateStats(stats)
+                    .then((result) => {
+                        if (result) {
+                            Object.assign(user.value, stats);
+                            console.log('Stats updated');
+                        } else {
+                            console.log('Stats not updated');
+                        }
+                    }).catch((error) => {
+                        console.log('Error updating stats: ' + error);
+                    });
+            }
+        }
         points.value = 0;
         field.value = Array.from({ length: rows.value }, () => Array.from({ length: columns.value }, () => 0));
         nextPieces.value = [];
@@ -219,13 +242,18 @@ export const useGameStore = defineStore('game', () => {
         reset.value = 0;
     }
 
-    async function login(username, password) {
+    async function fetchUs() {
+        user.value = await mp.getUser(username.value);
+    }
+
+    async function login(requestedUsername, password) {
         try {
-            const res = await mp.login(username, password);
+            const res = await mp.login(requestedUsername, password);
             if (res) {
                 logged.value = true;
                 username.value = res.username;
-                console.log('Logged in as: ' + username);
+                await fetchUs();
+                console.log('Logged in as: ' + res.username);
                 return res.jwt;
             } else {
                 console.log('Login failed');
@@ -238,13 +266,20 @@ export const useGameStore = defineStore('game', () => {
     }
 
     function logout() {
-        mp.logout()
-            .then((result) => {
-                logged.value = false;
-                console.log('Logged out');
-            }).catch((error) => {
-                console.log('Error logging out: ' + error);
-            });
+        // mp.logout()
+        //     .then((result) => {
+        //         if (result) {
+        //             logged.value = false;
+        //             console.log('Logged out');
+        //         } else {
+        //             console.log('Logout failed');
+        //         }
+        //     }).catch((error) => {
+        //         console.log('Error logging out: ' + error);
+        //     });
+        mp.disconnectWSS();
+        localStorage.removeItem('jwt');
+        logged.value = false;
     }
 
     function loginWSS() {
@@ -252,7 +287,7 @@ export const useGameStore = defineStore('game', () => {
             console.log('Username required');
             return;
         }
-        mp.connect(username.value);
+        mp.connectWSS(username.value);
     }
 
     function setOpponent() {
@@ -288,6 +323,7 @@ export const useGameStore = defineStore('game', () => {
         points,
         reset,
         username,
+        user,
         opponentUsername,
         logged,
         opponent,

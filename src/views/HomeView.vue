@@ -10,7 +10,6 @@ var gameStore = useGameStore();
   <div class="d-flex justify-content-center">
     <GameField></GameField>
     <div class="ms-3">
-      <div>Logged in: {{ gameStore.logged }}</div>
       <div>Opponent name: {{ gameStore.opponentUsername }}</div>
       <button @click="gameStore.loginWSS()">Login WSS</button>
       <button @click="gameStore.sendUpdatedField()">Send state</button>

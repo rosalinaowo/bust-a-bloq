@@ -1,7 +1,7 @@
 import { useGameStore } from '@/stores/game';
 import { io } from 'socket.io-client';
 
-var endpoint = 'http://localhost:3000/'
+var endpoint = 'http://localhost:3000'
 var gameStore = null;
 export var socket;
 
@@ -9,7 +9,7 @@ export var socket;
 //                   Socket.io stuff
 // -----------------------------------------------------------
 
-export function connect(username) {
+export function connectWSS(username) {
     gameStore = useGameStore()
     socket = io(endpoint);
 
@@ -41,6 +41,13 @@ export function connect(username) {
         console.log('Received opponent field update');
         gameStore.opponent = data;
     });
+}
+
+export function disconnectWSS() {
+    if (socket) {
+        socket.disconnect();
+        console.log('Disconnected from the server');
+    }
 }
 
 export function setOpponent(username) {
@@ -78,6 +85,17 @@ export function getOpponentStatus() {
 //                   Fetch stuff
 // -----------------------------------------------------------
 
+export async function getUser(username) {
+    const response = await fetch(endpoint + `/api/user?username=${username}`);
+
+    if (response.ok) {
+        const data = await response.json();
+        return data;
+    }
+
+    return null;
+}
+
 export async function login(username, password) {
     const response = await fetch(endpoint + '/api/user/login', {
         method: 'POST',
@@ -89,29 +107,47 @@ export async function login(username, password) {
 
     if (response.ok) {
         const data = await response.json();
+        connectWSS(data.username);
         return data;
     }
 
     return null;
 }
 
-export async function logout() {
+export async function updateStats(stats) {
     const token = localStorage.getItem('jwt');
-    const response = await fetch(endpoint + '/api/user/logout', {
-        method: 'POST',
+    const response = await fetch(endpoint + '/api/user/updateStats', {
+        method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer ' + token
-        }
+        },
+        body: JSON.stringify(stats)
     });
-
+    
     if (response.ok) {
-        localStorage.removeItem('jwt');
-        return true;
+        const data = await response.json();
+        return data;
     }
-
-    return false;
 }
+
+// export async function logout() {
+//     const token = localStorage.getItem('jwt');
+//     const response = await fetch(endpoint + '/api/user/logout', {
+//         method: 'POST',
+//         headers: {
+//             'Content-Type': 'application/json',
+//             'Authorization': 'Bearer ' + token
+//         }
+//     });
+
+//     if (response.ok) {
+//         localStorage.removeItem('jwt');
+//         return true;
+//     }
+
+//     return false;
+// }
 
 export async function renewLogin() {
     const token = localStorage.getItem('jwt');
