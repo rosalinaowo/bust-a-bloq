@@ -107,38 +107,60 @@ export const useGameStore = defineStore('game', () => {
 
     function generateRandomPiecesThatFit(colorsCount) {
         nextPieces.value = [];
-        const fittingPieces = ref(findPiecesThatFit());
+        const bestPieces = ref([]);
+        const normalPieces = ref([]);
     
-        for (let i = 0; i < nextPiecesAmount.value; i++) {
-            let pieceFound = false;
-            for (let attempt = 0; attempt < blocks.value.length; attempt++) {
-                const colorIdx = Math.floor(Math.random() * colorsCount) + 1;
-                const idx = Math.floor(Math.random() * blocks.value.length);
-                const selectedBlock = blocks.value[idx];
-                const blockCopy = toRawArray(selectedBlock);
-                console.log('Attempting to fit piece: ', blockCopy);
-    
-                if (idx == fittingPieces.value[i].pieceIdx) {
-                    console.log('Found a fitting piece: ', blockCopy);
-                    nextPieces.value.push({
+        //Ciclo per trovare pezzi adatti al campo
+        for (let i = 0; i < blocks.value.length; i++) {
+            const colorIdx = Math.floor(Math.random() * colorsCount) + 1;
+            const idx = Math.floor(Math.random() * blocks.value.length);
+            const selectedBlock = blocks.value[idx];
+            const blockCopy = toRawArray(selectedBlock);
+            console.log('Attempting to fit best piece: ', blockCopy);
+
+            
+            // Controlla se il pezzo è "miglio" nel campo
+            if (fitsInField(blockCopy) === "bestPiece") {
+                console.log('Best piece found: ', blockCopy);
+                bestPieces.value.push({
+                    pieceIdx: i,
+                    colorIdx: colorIdx,
+                    matrix: blockCopy,
+                    });     
+            }
+            else if (fitsInField(blockCopy) === "pieceFound")
+            {
+                    console.log('Normal piece found: ', blockCopy);     
+                    normalPieces.value.push({
                         pieceIdx: i,
                         colorIdx: colorIdx,
                         matrix: blockCopy,
-                    });
-                    pieceFound = true;
-                    break;
-                }
+                    });         
             }
-    
-            if (!pieceFound) {
-                // Fallback: Adjust the previous piece or generate a random one
-                const fallbackPiece = toRawArray(blocks.value[Math.floor(Math.random() * blocks.value.length)]);    
-                nextPieces.value.push({
-                    pieceIdx: i,
-                    colorIdx: Math.floor(Math.random() * colorsCount) + 1,
-                    matrix: fallbackPiece,
-                });
+        }
+
+        for(let i = 0; i < nextPiecesAmount.value; i++) {
+            // Aggiunge i migliori pezzi
+            for (let j = 0; j < bestPieces.value.length; j++) {
+                const bestPiece = bestPieces.value[j];
+                nextPieces.value.push(bestPiece);
             }
+
+            // Aggiunge i pezzi normali
+            for (let j = 0; j < normalPieces.value.length; j++) {
+                const normalPiece = normalPieces.value[j];
+                nextPieces.value.push(normalPiece);
+            }
+
+        }
+        if (nextPiecesAmount.value > nextPieces.value.length) {
+            // Fallback
+            const fallbackPiece = toRawArray(blocks.value[Math.floor(Math.random() * blocks.value.length)]);    
+            nextPieces.value.push({
+                pieceIdx: i,
+                colorIdx: Math.floor(Math.random() * colorsCount) + 1,
+                matrix: fallbackPiece,
+            });
         }
     }
 
@@ -155,26 +177,52 @@ export const useGameStore = defineStore('game', () => {
                     }
                     if (!fits) break;
                 }
-                if (fits) return true;
+                if (fits) {
+                    if (isBestPiece(piece, i, j)) {
+                        return "bestPiece";
+                    }
+                    else {
+                        return "pieceFound";
+                    }
+                }
             }
         }
-        return false;
+        return "notFound";
     }
 
-    function findPiecesThatFit() {
-        const piecesThatFit = ref([]);
-        for(let i = 0; i < blocks.value.length; i++) {
-            const block = blocks.value[i];
-            const blockCopy = toRawArray(block);
-            if (fitsInField(blockCopy)) {
-                piecesThatFit.value.push({
-                    pieceIdx: i,
-                    matrix: blockCopy
-                });
+    // function findPiecesThatFit() {
+    //     const piecesThatFit = ref([]);
+    //     for(let i = 0; i < blocks.value.length; i++) {
+    //         const block = blocks.value[i];
+    //         const blockCopy = toRawArray(block);
+    //         if (fitsInField(blockCopy)) {
+    //             piecesThatFit.value.push({
+    //                 pieceIdx: i,
+    //                 matrix: blockCopy
+    //             });
+    //         }
+    //     }
+    //     console.log('Pieces that fit: ', piecesThatFit.value);
+    //     return piecesThatFit.value;
+    // }
+
+    function isBestPiece(piece, xCoord, yCoord) {
+        var fieldData = field.value.map(row => [...row]);
+
+        for (let i = 0; i < piece.length; i++) {
+            for (let j = 0; j < piece[i].length; j++) {
+                if (piece[i][j] === 1) {
+                    fieldData[xCoord + i][yCoord + j] = 1;
+                }
             }
         }
-        console.log('Pieces that fit: ', piecesThatFit.value);
-        return piecesThatFit.value;
+
+        if (clearLines(fieldData) === true) {
+            return true;
+        }
+        else {
+            return false;
+        }
     }
 
     function clearLines(fieldGiven) {
@@ -190,13 +238,14 @@ export const useGameStore = defineStore('game', () => {
         }
     
         
-        const fullRows = new Set();
-        const fullCols = new Set();
-        const rowCounts = Array(rows.value).fill(0);
-        const colCounts = Array(columns.value).fill(0);
+        const fullRows = new Set(); //Array che contiene gli indici delle righe piene
+        const fullCols = new Set(); //Array che contiene gli indici delle colonne piene
+        const rowCounts = Array(rows.value).fill(0); //Array che contiene il numero di celle piene per riga
+        const colCounts = Array(columns.value).fill(0); //Idem per colonne
         let cellsCount = rows.value * columns.value;
-    
-        // Una sola iterazione su tutto il campo
+        let didItRemove = false; //Ritorna true se sono state rimosse righe o colonne
+
+        //Controlla quali caselle sono piene
         for (let i = 0; i < rows.value; i++) {
             for (let j = 0; j < columns.value; j++) {
                 if (fieldData[i][j] !== 0) {
@@ -209,9 +258,11 @@ export const useGameStore = defineStore('game', () => {
         // Identifica righe e colonne piene
         for (let i = 0; i < rows.value; i++) {
             if (rowCounts[i] === columns.value) fullRows.add(i);
+            didItRemove = true;
         }
         for (let j = 0; j < columns.value; j++) {
             if (colCounts[j] === rows.value) fullCols.add(j);
+            didItRemove = true;
         }
     
         // Calcolo punti
@@ -241,6 +292,8 @@ export const useGameStore = defineStore('game', () => {
         console.timeEnd("clearLines");
 
         sendUpdatedField();
+
+        return didItRemove;
     }
 
     function resetGame() {
