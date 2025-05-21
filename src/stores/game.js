@@ -243,12 +243,27 @@ export const useGameStore = defineStore('game', () => {
         loadExampleGame();
         generateRandomPiecesThatFit(blockColorsNumber.value);
         reset.value = 1;
-        console.log('RESET VALUE: ' + reset.value);
         reset.value = 0;
-        console.log('RESET VALUE:' + reset.value);
     }
 
-    function login() {
+    async function login(username, password) {
+        try {
+            const res = await mp.login(username, password);
+            if (res) {
+                logged.value = true;
+                console.log('Logged in as: ' + username);
+                return res.token;
+            } else {
+                console.log('Login failed');
+                return null;
+            }
+        } catch (error) {
+            console.log('Error logging in: ' + error);
+            return null;
+        }
+    }
+
+    function loginWSS() {
         if (username.value.length < 1) {
             console.log('Username required');
             return;
@@ -273,7 +288,7 @@ export const useGameStore = defineStore('game', () => {
 
     function updateOpponentState() {
         console.log('Requesting opponent state');
-        mp.getOpponentStatus();
+        opponent.value = mp.getOpponentStatus();
     }
 
     return {
@@ -300,6 +315,7 @@ export const useGameStore = defineStore('game', () => {
         clearLines,
         resetGame,
         login,
+        loginWSS,
         setOpponent,
         sendUpdatedField,
         updateOpponentState

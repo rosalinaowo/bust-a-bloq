@@ -69,7 +69,7 @@ export function getOpponentStatus() {
     console.log('Requesting opponent state');
     socket.emit('getOpponentState');
     socket.once('opponentState', (status) => {
-        gameStore.opponent = status;
+        return status;
     });
 }
 
@@ -78,7 +78,7 @@ export function getOpponentStatus() {
 // -----------------------------------------------------------
 
 export async function login(username, password) {
-    const response = await fetch('/api/user/login', {
+    const response = await fetch('http://localhost:3000/api/user/login', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -88,12 +88,13 @@ export async function login(username, password) {
 
     if (response.ok) {
         const data = await response.json();
-        localStorage.setItem('jwt', data.token);
-        gameStore.username = username;
-        return true;
+        // localStorage.setItem('jwt', data.token);
+        // gameStore.username = username;
+        // return true;
+        return data;
     }
 
-    return false;
+    return null;
 }
 
 /*

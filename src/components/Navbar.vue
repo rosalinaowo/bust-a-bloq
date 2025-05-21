@@ -1,5 +1,30 @@
-<script setup>
+<script>
 import { RouterLink } from 'vue-router'
+import { useGameStore } from '@/stores/game'
+
+export default {
+  name: 'Navbar',
+  components: {
+    RouterLink
+  },
+  data() {
+    return {
+      gameStore: useGameStore(),
+      username: '',
+      password: ''
+    }
+  },
+  methods: {
+    async login() {
+      let jwt = await this.gameStore.login(this.username, this.password);
+      if (jwt) {
+        localStorage.setItem('token', jwt);
+        return true;
+      }
+      return false;
+    }
+  }
+}
 </script>
 
 <template>
@@ -36,17 +61,17 @@ import { RouterLink } from 'vue-router'
         <div class="modal-body">
           <div class="mb-3">
             <label for="usernameInput" class="col-form-label">Username:</label>
-            <input type="text" class="form-control" id="usernameInput">
+            <input v-model="username" type="text" class="form-control" id="usernameInput">
           </div>
           <div class="mb-3">
             <label for="passwordInput" class="col-form-label">Password:</label>
-            <input type="password" class="form-control" id="passwordInput">
+            <input v-model="password" type="password" class="form-control" id="passwordInput">
           </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
           <button type="button" class="btn btn-primary">Register</button>
-          <button type="button" class="btn btn-primary">Login</button>
+          <button @click="login()" type="button" class="btn btn-primary">Login</button>
         </div>
       </div>
     </div>

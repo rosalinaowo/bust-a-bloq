@@ -1,5 +1,6 @@
 const fs = require('fs');
 const express = require('express');
+const cors = require('cors');
 const { createServer } = require('http');
 const { Server } = require('socket.io');
 const Joi = require('joi');
@@ -17,7 +18,7 @@ const userUpdateSchema = Joi.object({
 
 const confPath = './config.json';
 const dbPath = './db.json';
-const app = express().use(express.json());
+const app = express().use(cors()).use(express.json());
 const server = createServer(app);
 const io = new Server(server, {
     cors: {
@@ -248,6 +249,8 @@ app.post('/api/user/register', (req, res) => {
 
 app.post('/api/user/login', (req, res) => {
     const { username: requestedUsername, password } = req.body;
+    console.log(`[L?] ${requestedUsername}`);
+
     if (!requestedUsername) {
         return res.status(400).json({ message: 'Username is required' });
     }
@@ -265,6 +268,8 @@ app.post('/api/user/login', (req, res) => {
     const token = jwt.sign({ username: user.username }, config.JWT_SECRET, { expiresIn: config.JWT_EXPIRATION });
     const { username, maxPoints } = user || {};
     const cleanUser = { token, username, maxPoints };
+
+    console.log(`[L+] ${requestedUsername}`);
 
     res.json(cleanUser);
 });
