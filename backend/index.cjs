@@ -176,6 +176,14 @@ io.on('connection', (socket) => {
 //                      HTTP stuff
 // -----------------------------------------------------------
 
+app.get('/api/users/online', (req, res) => {
+    const onlineUsers = Array.from(usersBySocket.values()).map(user => ({
+        username: user.username,
+        isBusy: games.some(g => g.p1 === user.username || g.p2 === user.username)
+    }));
+    res.json(onlineUsers);
+});
+
 app.post('/api/users', (req, res) => {
     const { dbPassword } = req.body;
     if (dbPassword !== config.DB_PASSWORD) {

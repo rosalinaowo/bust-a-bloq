@@ -85,6 +85,17 @@ export function getOpponentStatus() {
 //                   Fetch stuff
 // -----------------------------------------------------------
 
+export async function getOnlineUsers() {
+    const response = await fetch(endpoint + '/api/users/online');
+
+    if (response.ok) {
+        const data = await response.json();
+        return data;
+    }
+
+    return null;
+}
+
 export async function getUser(username) {
     const response = await fetch(endpoint + `/api/user?username=${username}`);
 
