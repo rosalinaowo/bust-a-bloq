@@ -136,12 +136,7 @@ export class PixiGame {
         const pointsTextStyle = new TextStyle({
             fontFamily: 'Arial',
             fontSize: 36,
-            fill: 0xffffff,
-            // stroke: {
-            //     color: 0xde3249,
-            //     width: 4,
-            //     join: 'round'
-            // }
+            fill: 0xffffff
         });
         const pointsText = new Text({ text: `Points: ${this.gameStore.points}`, style: pointsTextStyle });
         pointsText.x = 5;

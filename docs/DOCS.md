@@ -15,12 +15,12 @@ Questo documento fornisce una panoramica tecnica e stilista del progetto "Bust-a
 ## Feature programmate
 - [x] Campo di gioco
 - [ ] Menù principale
-- [ ] AI generazione blocchi
-- [ ] Multiplayer
+- [x] AI generazione blocchi
+- [x] Multiplayer
 - [ ] Lista Amici
-- [ ] Partite private
+- [x] Partite private
 - [ ] Inviti alle partite
-- [ ] Pelli per i blocchi
+- [x] Pelli per i blocchi
 - [ ] Pagina about
 
 ## Struttura del codice
@@ -74,7 +74,15 @@ Al contrario di altre tipologie di giochi simile (*es. Tetris*), i blocchi di (*
 
   ![Navbar component code](./images/Navbar.png "Navbar component code")
 
-- Inizializzazione delle variabili per il render grafico, calcoliamo la posizione del campo e impostiamo la grandezza dei blocchi ([Graphics.js](../src/scripts/graphics.js))
+- Le texture assegnate ai blocchi sono totalmente originali e richiamano le ambientazioni degli iconici film di Bud Spencer e Terence Hill, ma sono in grado di essere cambiate con altre tramite un apposito menù.
+
+[Inserire immagine]
+
+- Creazione di un modal (una finestra pop-up) per permettere il login e la registrazione al sito, con input dei dati e bottoni per scegliere l'azione ([Navbar.vue](../src/components/Navbar.vue))
+
+  ![Login modal](./images/loginModal.jpeg "Login modal")
+
+- Inizializzazione delle variabili per il render grafico, calcoliamo la posizione del campo, impostiamo la grandezza dei blocchi e il numero di texture disponibili, infine inizializziamo l'app e impostiamo un watcher per permettere il reset del gioco ([Graphics.js](../src/scripts/graphics.js))
 
   ![Game field constructor](./images/Graphics_constructor.jpeg "Game field constructor")
 
@@ -82,13 +90,17 @@ Al contrario di altre tipologie di giochi simile (*es. Tetris*), i blocchi di (*
 
   ![Load block textures function](./images/loadBlockTextures.jpeg "Load block textures function")
 
-- Metodo per renderizzare il campo di gioco, scorre la matrice del campo, crea uno sprite per ogni blocco e imposta le coordinate ([Graphics.js](../src/scripts/graphics.js))
+- Metodo per renderizzare il campo di gioco, dispone di due modalità: una usa il campo del giocatore, l'altra quello dell'avversario. Scorre la matrice del campo, crea uno sprite per ogni blocco, gli assegna una texture e imposta le coordinate ([Graphics.js](../src/scripts/graphics.js))
 
-  ![Get field graphics function](./images/getFieldGraphic.jpeg "Get field graphics function")
+  ![Get field graphics function](./images/getFieldContainer.jpeg "Get field graphics function")
 
 - Metodo che viene eseguito ogni frame, fa il render dell'intero gioco, imposta i gli eventi e aggiunge il titolo, il campo di gioco e i pezzi successivi ([Graphics.js](../src/scripts/graphics.js))
 
   ![Graphics init function](./images/graphics_init.jpeg "Graphics init function")
+
+- In più il metodo aggiunge anche il contatore dei punti, il bottone di reset e due watcher per aggiornare i punti e il campo dell'avversario ([Graphics.js](../src/scripts/graphics.js))
+
+  ![Graphics init function 2](./images/graphics_init2.jpeg "Graphics init function 2")
 
 - Inazializzazione delle variabili necessarie al render dei pezzi successivi, creiamo l'oggetto, i suoi eventi e gli assegnamo una texture casuale ([Graphics.js](../src/scripts/graphics.js))
 
@@ -97,6 +109,14 @@ Al contrario di altre tipologie di giochi simile (*es. Tetris*), i blocchi di (*
 - Assegnazione delle coordinate al pezzo appena creato e aggiunta al container
 
   ![Draw next pieces 2](./images/drawNextPieces2.jpeg "Draw next pieces 2")
+
+- Metodi per aggiornare le view del giocatore e del suo avversario: rimuovono i container, li aggiornano e li riposizionano nell'app ([Graphics.js](../src/scripts/graphics.js))
+
+  ![Update views methods](./images/updateViews.jpeg "Update views methods")
+
+- Metodi per connettersi e disconnettersi al server web socket per permettere la funzionalità multigiocatore, con appropriati metodi di callback per gestire i vari esiti ([Graphics.js](../src/scripts/multiplayer.js))
+
+  ![Connect and disconnect WSS](./images/connectWSS.jpeg "Connect and disconnect WSS")
 
 - Creazione della matrice in grado di visualizzare il campo di gioco tramite metodi in graphics.js (come getFieldGraphics()). Questa variabile ci aiuterà a capire quali spazi nella board sono occupati e quali tipi di texture utilizzano. Ogni numero diverso da 0 indica una texture diversa.
   
@@ -113,3 +133,23 @@ Al contrario di altre tipologie di giochi simile (*es. Tetris*), i blocchi di (*
 - Funzione che fornisce al giocatore 3 pezzi casuali tra quelli all'interno della variabile "blocks" con una texture casuale. Questi pezzi saranno forniti al giocatore e potrà inserirli nel campo di gioco a suo piacimento.
   
   ![Variables](./images/getRandomPieces.jpg "Variables")
+
+- Oltre alla funzione sopra citata, il gioco è anche in grado di generare pezzi che si adattano al campo di gioco corrente, permettendo al giocatore di poter sempre avanzare all'interno della partita senza che esso rimanga bloccato. La funzione darà sempre la priorità ai blocchi migliori, poi a quelli in grado di entrare nel campo e, se non è stato in grado di trovarne almeno 3, genererà dei pezzi casualmente.
+
+[Inserire immagine generateRandomPiecesThatFit]
+
+- Funzione che controlla se un pezzo è in grado o no di entrare nel campo di gioco, utile per controlli interni e calcolare quali sono i pezzi migliori da dare al giocatore.
+
+[Inserire immagine FitsInField]
+
+- Questa funzione invece, è in grado di verificare se un determinato blocco è un "miglior pezzo", ovvero è sia in grado di entrare nel campo corrente, sia è capace di eliminare una riga oppure una colonna se piazzato in una determinata maniera.
+
+[Inserire immagine isBestPiece]
+
+- Il metodo clearLines invece, ha una duplice funzione: O è in grado di rilevare se il giocarore ha completato una riga o una colonna per eliminarla, o può essere utilizzato per testare se, con una determinata disposizione del campo che gli verrà fornita in input, si è completata una riga o una colonna. Utile per capire quali sono i blocchi migliori da fornire al giocatore.
+
+[Inserire immagine clearLines]
+
+- Funzione che, cliccando un apposito bottone posto in alto a sinistra della schermata di gioco, è in grado di resettare lo stato della partita e i punti ottenuti dal giocatore finora, generando nuovi pezzi da dare al giocatore.
+
+[Inserire immagine resetGame]
