@@ -114,9 +114,17 @@ Al contrario di altre tipologie di giochi simile (*es. Tetris*), i blocchi di (*
 
   ![Update views methods](./images/updateViews.jpeg "Update views methods")
 
-- Metodi per connettersi e disconnettersi al server web socket per permettere la funzionalità multigiocatore, con appropriati metodi di callback per gestire i vari esiti ([Graphics.js](../src/scripts/multiplayer.js))
+- Metodi per connettersi e disconnettersi al server web socket per permettere la funzionalità multigiocatore, con appropriati metodi di callback per gestire i vari esiti ([Multiplayer.js](../src/scripts/multiplayer.js))
 
   ![Connect and disconnect WSS](./images/connectWSS.jpeg "Connect and disconnect WSS")
+
+- Metodi fetch per reperire i dati di un certo utente e per fare il login. Se il login avviene con successo l'app si connette automaticamente al server WebSockets per abilitare la funzionalità multigiocatore ([Multiplayer.js](../src/scripts/multiplayer.js))
+
+  ![getUser and login API calls](./images/getUser_Login.jpeg "getUser and login API calls")
+
+- Import delle librerie e inizializzazione delle variabili nel server
+
+  ![Server initialization](./images/serverVariables.jpeg "Server initialization")
 
 - Creazione della matrice in grado di visualizzare il campo di gioco tramite metodi in graphics.js (come getFieldGraphics()). Questa variabile ci aiuterà a capire quali spazi nella board sono occupati e quali tipi di texture utilizzano. Ogni numero diverso da 0 indica una texture diversa.
   
