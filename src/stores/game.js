@@ -324,6 +324,19 @@ export const useGameStore = defineStore('game', () => {
         reset.value = 0;
     }
 
+    function checkLoss() {
+        // True se nessuno dei pezzi successivi può essere piazzato
+        for (let idx = 0; idx < nextPieces.value.length; idx++) {
+            const piece = nextPieces.value[idx]?.matrix;
+            if (!piece) continue;
+            if (fitsInField(piece) !== "notFound") {
+                return false; // Almeno un pezzo può essere piazzato
+            }
+        }
+        console.log("The player has lost the game!");
+        return true;
+    }
+
     async function fetchUs() {
         user.value = await mp.getUser(username.value);
     }
@@ -421,6 +434,7 @@ export const useGameStore = defineStore('game', () => {
         loginWSS,
         setOpponent,
         sendUpdatedField,
-        updateOpponentState
+        updateOpponentState,
+        checkLoss
     }
 });

@@ -60,6 +60,18 @@ Al contrario di altre tipologie di giochi simile (*es. Tetris*), i blocchi di (*
 
 - Inserire opzioni per regolare il volume di effetti e musica del gioco in separazione.
 
+## Immagini del gioco
+
+  #### Qualche esempio di partite
+
+  ![ExampleField](./images/ExampleField.jpg "ExampleField")
+
+  ![ExampleField2](./images/ExampleField2.jpg "ExampleField2")
+
+  #### Partita persa
+
+  ![GameLoss](./images/LossGame.jpg "GameLoss")
+
 ## Spiegazione codice
 
 - Creazione della pagina home, con l'inserimento del componente GameField (che visualizza il campo di gioco) e alcuni componenti di debug ([HomeView.vue](../src/views/HomeView.vue))
@@ -142,22 +154,43 @@ Al contrario di altre tipologie di giochi simile (*es. Tetris*), i blocchi di (*
   
   ![Variables](./images/getRandomPieces.jpg "Variables")
 
-- Oltre alla funzione sopra citata, il gioco è anche in grado di generare pezzi che si adattano al campo di gioco corrente, permettendo al giocatore di poter sempre avanzare all'interno della partita senza che esso rimanga bloccato. La funzione darà sempre la priorità ai blocchi migliori, poi a quelli in grado di entrare nel campo e, se non è stato in grado di trovarne almeno 3, genererà dei pezzi casualmente.
+- Oltre alla funzione sopra citata, il gioco è anche in grado di generare pezzi che si adattano al campo di gioco corrente, permettendo al giocatore di poter avanzare all'interno della partita senza che esso rimanga bloccato. 
 
-[Inserire immagine generateRandomPiecesThatFit]
+  ![getPiecesThatFit1](./images/getRandomPiecesThatFit1.jpg "piecedThatFit method part 1")
 
-- Funzione che controlla se un pezzo è in grado o no di entrare nel campo di gioco, utile per controlli interni e calcolare quali sono i pezzi migliori da dare al giocatore.
+- Inoltre, questa stessa funzione sceglie randomicamente se dare al giocatore un pezzo "migliore", ovvero uno che riempie una riga o una colonna, oppure uno "normale", ovvero un pezzo che entra nel campo di gioco e basta. Questo è per lasciare al giocatore una comunque alta possibilità di avanzare all'interno della partita senza però rendere il gioco monotono.
 
-[Inserire immagine FitsInField]
+  ![getPiecesThatFit2](./images/getRandomPiecesThatFit2.jpg "piecedThatFit method part 2")
+
+- Funzione che controlla se un pezzo è in grado o no di entrare nel campo di gioco, utile per controlli interni e calcolare quali sono i pezzi migliori da dare al giocatore. Esso controlla
+tutte le posizioni possibili con le quali il pezzo può entrare e si assicura se sia un miglior pezzo o no.
+
+  ![fitsInField method](./images/fitsInField.jpg "fitsInField method")
 
 - Questa funzione invece, è in grado di verificare se un determinato blocco è un "miglior pezzo", ovvero è sia in grado di entrare nel campo corrente, sia è capace di eliminare una riga oppure una colonna se piazzato in una determinata maniera.
 
-[Inserire immagine isBestPiece]
+  ![isBestPiece method](./images/isBestPiece.jpg "isBestPiece method")
 
 - Il metodo clearLines invece, ha una duplice funzione: O è in grado di rilevare se il giocarore ha completato una riga o una colonna per eliminarla, o può essere utilizzato per testare se, con una determinata disposizione del campo che gli verrà fornita in input, si è completata una riga o una colonna. Utile per capire quali sono i blocchi migliori da fornire al giocatore.
 
-[Inserire immagine clearLines]
+  ![clearLines method 1](./images/clearLines.jpg "clearLines method 1")
+
+- Questo stesso metodo è anche in grado di assegnare dei punti al giocatore in base a quante righe o colonne ha distrutto, per poi aggiornare il campo da gioco con le linee eliminate.
+
+  ![clearLines method 2](./images/clearLinesPoints.jpg "clearLines method 2")
 
 - Funzione che, cliccando un apposito bottone posto in alto a sinistra della schermata di gioco, è in grado di resettare lo stato della partita e i punti ottenuti dal giocatore finora, generando nuovi pezzi da dare al giocatore.
 
-[Inserire immagine resetGame]
+  ![resetGame method](./images/resetGame.jpg "resetGame method")
+
+- Funzione che viene chiamata ogni volta che viene piazzato un blocco e controlla se il giocatore sia in grado o no di continuare la partita. In caso il giocatore sia rimasto bloccato, il metodo ritornerà true e il campo di gioco verra resettato.
+
+  ![checkLoss method](./images/checkLoss.jpg "checkLoss method")
+
+- Funzione che assicura il login al giocatore e gli permette di visualizzare il nome utente.
+
+  ![login game.js method](./images/login.jpg "login game.js method")
+
+- Altri metodi utili per recuperare informazioni sul profilo e, soprattutto, recuperare il campo del giocatore avversario per visualizzare i suoi progressi.
+
+  ![miscMultiplayer methods in game.js](./images/multiplayerMethods.jpg "miscMultiplayer methods in game.js")

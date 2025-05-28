@@ -355,5 +355,13 @@ export class PixiGame {
 
         this.app.stage.off('pointermove', this.onDragMove);
         this.dragTarget = null;
+
+        if (this.gameStore.checkLoss() == true) {
+            console.log('Hai perso!');
+            alert('Hai perso! Riprova!');
+            this.gameStore.resetGame();
+            this.updateView();
+        }
+        
     }
 }
