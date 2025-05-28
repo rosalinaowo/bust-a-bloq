@@ -48,7 +48,7 @@ export const useGameStore = defineStore('game', () => {
     //const fieldSprites = ref([]);
     const nextPieces = ref([]);
 
-    const texturePacks = ref([ 'default', 'blockMC' ]);
+    const texturePacks = ref([ 'default', 'blockBandT' ]);
     const selectedTexturePack = texturePacks.value[1];
     const blockColorsNumber = ref(0);
     const reset = ref(0);
@@ -106,64 +106,85 @@ export const useGameStore = defineStore('game', () => {
         //Ciclo per trovare pezzi adatti al campo
         for (let i = 0; i < blocks.value.length; i++) {
             const colorIdx = Math.floor(Math.random() * colorsCount) + 1;
-            const idx = Math.floor(Math.random() * blocks.value.length);
-            const selectedBlock = blocks.value[idx];
+            const selectedBlock = blocks.value[i];
             const blockCopy = toRawArray(selectedBlock);
-            console.log('Attempting to fit best piece: ', blockCopy);
-
             
-            // Controlla se il pezzo è "miglio" nel campo
-            if (fitsInField(blockCopy) === "bestPiece") {
-                console.log('Best piece found: ', blockCopy);
+            // Controlla se il pezzo è "migliore" nel campo
+            if (fitsInField(blockCopy, colorIdx) === "bestPiece") {
                 bestPieces.value.push({
                     pieceIdx: i,
                     colorIdx: colorIdx,
                     matrix: blockCopy,
-                    });     
+                });     
             }
-            else if (fitsInField(blockCopy) === "pieceFound")
+            else if (fitsInField(blockCopy, colorIdx) === "pieceFound")
             {
-                    console.log('Normal piece found: ', blockCopy);     
-                    normalPieces.value.push({
-                        pieceIdx: i,
-                        colorIdx: colorIdx,
-                        matrix: blockCopy,
-                    });         
+                normalPieces.value.push({
+                    pieceIdx: i,
+                    colorIdx: colorIdx,
+                    matrix: blockCopy,
+                });         
+            }
+        }
+        
+        let piecesNeeded = nextPiecesAmount.value;
+
+        // Mischia i pezzi migliori e normali
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
             }
         }
 
-        for(let i = 0; i < nextPiecesAmount.value; i++) {
-            // Aggiunge i migliori pezzi
-            for (let j = 0; j < bestPieces.value.length; j++) {
-                const bestPiece = bestPieces.value[j];
-                nextPieces.value.push(bestPiece);
-            }
+        shuffle(bestPieces.value);
+        shuffle(normalPieces.value);
 
-            // Aggiunge i pezzi normali
-            for (let j = 0; j < normalPieces.value.length; j++) {
-                const normalPiece = normalPieces.value[j];
-                nextPieces.value.push(normalPiece);
+        let bestIdx = 0;
+        let normalIdx = 0;
+        
+        for (let k = 0; k < piecesNeeded; k++) {
+            // Tutti e due i tipi di pezzi disponibili
+            if (bestIdx < bestPieces.value.length && normalIdx < normalPieces.value.length) {
+                if (Math.random() < 0.5) {
+                    console.log("Adding best piece: ", bestPieces.value[bestIdx]);
+                    nextPieces.value.push(bestPieces.value[bestIdx++]);
+                } else {
+                    console.log("Adding normal piece: ", normalPieces.value[normalIdx]);
+                    nextPieces.value.push(normalPieces.value[normalIdx++]);
+                }
             }
-
-        }
-        if (nextPiecesAmount.value > nextPieces.value.length) {
+            // Solo pezzi migliori disponibili
+            else if (bestIdx < bestPieces.value.length) {
+                console.log("Adding best piece: ", bestPieces.value[bestIdx]);
+                nextPieces.value.push(bestPieces.value[bestIdx++]);
+            }
+            // Solo pezzi normali disponibili
+            else if (normalIdx < normalPieces.value.length) {
+                console.log("Adding normal piece: ", normalPieces.value[normalIdx]);
+                nextPieces.value.push(normalPieces.value[normalIdx++]);
+            }
             // Fallback
-            const fallbackPiece = toRawArray(blocks.value[Math.floor(Math.random() * blocks.value.length)]);    
-            nextPieces.value.push({
-                pieceIdx: i,
-                colorIdx: Math.floor(Math.random() * colorsCount) + 1,
-                matrix: fallbackPiece,
-            });
+            else {
+                const fallbackPiece = toRawArray(blocks.value[Math.floor(Math.random() * blocks.value.length)]);
+                console.log("Adding fallback piece: ", fallbackPiece);
+                nextPieces.value.push({
+                    pieceIdx: Math.floor(Math.random() * blocks.value.length),
+                    colorIdx: Math.floor(Math.random() * colorsCount) + 1,
+                    matrix: fallbackPiece,
+                });
+            }
         }
     }
 
     function fitsInField(piece) {
+        let foundNormal = false;
         for (let i = 0; i <= rows.value - piece.length; i++) {
             for (let j = 0; j <= columns.value - piece[0].length; j++) {
                 let fits = true;
                 for (let x = 0; x < piece.length; x++) {
                     for (let y = 0; y < piece[x].length; y++) {
-                        if (piece[x][y] === 1 && field.value[i + x][j + y] !== 0) {
+                        if (piece[x][y] !== 0 && field.value[i + x][j + y] !== 0) {
                             fits = false;
                             break;
                         }
@@ -172,36 +193,20 @@ export const useGameStore = defineStore('game', () => {
                 }
                 if (fits) {
                     if (isBestPiece(piece, i, j)) {
+                        console.log('Best piece fits at ', i, j);
                         return "bestPiece";
-                    }
-                    else {
-                        return "pieceFound";
+                    } else {
+                        foundNormal = true;
                     }
                 }
             }
         }
+        if (foundNormal) return "pieceFound";
         return "notFound";
     }
 
-    // function findPiecesThatFit() {
-    //     const piecesThatFit = ref([]);
-    //     for(let i = 0; i < blocks.value.length; i++) {
-    //         const block = blocks.value[i];
-    //         const blockCopy = toRawArray(block);
-    //         if (fitsInField(blockCopy)) {
-    //             piecesThatFit.value.push({
-    //                 pieceIdx: i,
-    //                 matrix: blockCopy
-    //             });
-    //         }
-    //     }
-    //     console.log('Pieces that fit: ', piecesThatFit.value);
-    //     return piecesThatFit.value;
-    // }
-
     function isBestPiece(piece, xCoord, yCoord) {
         var fieldData = field.value.map(row => [...row]);
-
         for (let i = 0; i < piece.length; i++) {
             for (let j = 0; j < piece[i].length; j++) {
                 if (piece[i][j] === 1) {
@@ -209,17 +214,10 @@ export const useGameStore = defineStore('game', () => {
                 }
             }
         }
-
-        if (clearLines(fieldData) === true) {
-            return true;
-        }
-        else {
-            return false;
-        }
+        return clearLines(fieldData) === true;
     }
 
     function clearLines(fieldGiven) {
-        console.time("clearLines");
         var fieldData = null;
 
         if (!fieldGiven){ // Se non viene passato un campo, usiamo quello di gioco
@@ -250,25 +248,30 @@ export const useGameStore = defineStore('game', () => {
     
         // Identifica righe e colonne piene
         for (let i = 0; i < rows.value; i++) {
-            if (rowCounts[i] === columns.value) fullRows.add(i);
-            didItRemove = true;
+            if (rowCounts[i] === columns.value) {
+                fullRows.add(i);
+                didItRemove = true;
+            }
         }
         for (let j = 0; j < columns.value; j++) {
-            if (colCounts[j] === rows.value) fullCols.add(j);
-            didItRemove = true;
+            if (colCounts[j] === rows.value) {
+                fullCols.add(j);
+                didItRemove = true;
+            }    
         }
     
         // Calcolo punti
-        let count = fullRows.size + fullCols.size;
-        points.value += count * 80;
+        if (!fieldGiven) {
+            let count = fullRows.size + fullCols.size;
+            points.value += count * 80;
     
-        if (count >= 2 && count <= 3) {
-            points.value = Math.floor(points.value * pointsMultiplier.value[0]);
-        } else if (count >= 4 && count <= 5) {
-            points.value = Math.floor(points.value * pointsMultiplier.value[1]);
-        } else if (count > 5) {
-            points.value = Math.floor(points.value * pointsMultiplier.value[2]);
-        }
+            if (count >= 2 && count <= 3) {
+                points.value = Math.floor(points.value * pointsMultiplier.value[0]);
+            } else if (count >= 4 && count <= 5) {
+                points.value = Math.floor(points.value * pointsMultiplier.value[1]);
+            } else if (count > 5) {
+                points.value = Math.floor(points.value * pointsMultiplier.value[2]);
+            }
     
         // Cancellazione
         for (const i of fullRows) {
@@ -281,11 +284,9 @@ export const useGameStore = defineStore('game', () => {
         }
 
         field.value = fieldData;
-    
-        console.timeEnd("clearLines");
 
         sendUpdatedField();
-
+        }
         return didItRemove;
     }
 
