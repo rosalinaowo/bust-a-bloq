@@ -239,7 +239,7 @@ export class PixiGame {
 
         for (let p = 0; p < this.gameStore.nextPieces.length; p++) {
             const piece = toRaw(this.gameStore.nextPieces[p]);
-            if (piece.pieceIdx === undefined) continue;
+            if (!piece || piece.pieceIdx === undefined) continue;
 
             const pieceMatrix = piece.matrix;
             const texture = Assets.get('block' + piece.colorIdx);
@@ -309,10 +309,16 @@ export class PixiGame {
             }
         }
 
-        this.gameStore.nextPieces[this.dragTarget.piece.pieceIdx] = [];
-        if (this.gameStore.nextPieces[0].length == 0 &&
-            this.gameStore.nextPieces[1].length == 0 &&
-            this.gameStore.nextPieces[2].length == 0) this.gameStore.generateRandomPiecesThatFit(this.BLOCK_COLORS_NUMBER);
+        // Remove the used piece from nextPieces
+        const idx = this.gameStore.nextPieces.indexOf(pieceContainer.piece);
+        if (idx !== -1) {
+            this.gameStore.nextPieces.splice(idx, 1);
+        }
+
+        // If all pieces have been used, generate new ones
+        if (this.gameStore.nextPieces.length === 0) {
+            this.gameStore.generateRandomPiecesThatFit(this.BLOCK_COLORS_NUMBER);
+        }
     }
 
     getMatrixCoordinates(dragTarget) {
@@ -349,5 +355,13 @@ export class PixiGame {
 
         this.app.stage.off('pointermove', this.onDragMove);
         this.dragTarget = null;
+
+        if (this.gameStore.checkLoss() == true) {
+            console.log('Hai perso!');
+            alert('Hai perso! Riprova!');
+            this.gameStore.resetGame();
+            this.updateView();
+        }
+        
     }
 }

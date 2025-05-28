@@ -49,7 +49,7 @@ export const useGameStore = defineStore('game', () => {
     //const fieldSprites = ref([]);
     const nextPieces = ref([]);
 
-    const texturePacks = ref([ 'default', 'blockMC' ]);
+    const texturePacks = ref([ 'default', 'blockBandT' ]);
     const selectedTexturePack = texturePacks.value[1];
     const blockColorsNumber = ref(0);
     const reset = ref(0);
@@ -107,31 +107,76 @@ export const useGameStore = defineStore('game', () => {
 
     function generateRandomPiecesThatFit(colorsCount) {
         nextPieces.value = [];
+        const bestPieces = ref([]);
+        const normalPieces = ref([]);
     
-        for (let i = 0; i < nextPiecesAmount.value; i++) {
-            let pieceFound = false;
-            for (let attempt = 0; attempt < blocks.value.length; attempt++) {
-                const colorIdx = Math.floor(Math.random() * colorsCount) + 1;
-                const idx = Math.floor(Math.random() * blocks.value.length);
-                const selectedBlock = blocks.value[idx];
-                const blockCopy = toRawArray(selectedBlock);
-    
-                if (fitsInField(blockCopy)) {
-                    nextPieces.value.push({
-                        pieceIdx: i,
-                        colorIdx: colorIdx,
-                        matrix: blockCopy,
-                    });
-                    pieceFound = true;
-                    break;
+        //Ciclo per trovare pezzi adatti al campo
+        for (let i = 0; i < blocks.value.length; i++) {
+            const colorIdx = Math.floor(Math.random() * colorsCount) + 1;
+            const selectedBlock = blocks.value[i];
+            const blockCopy = toRawArray(selectedBlock);
+            
+            // Controlla se il pezzo è "migliore" nel campo
+            if (fitsInField(blockCopy, colorIdx) === "bestPiece") {
+                bestPieces.value.push({
+                    pieceIdx: i,
+                    colorIdx: colorIdx,
+                    matrix: blockCopy,
+                });     
+            }
+            else if (fitsInField(blockCopy, colorIdx) === "pieceFound")
+            {
+                normalPieces.value.push({
+                    pieceIdx: i,
+                    colorIdx: colorIdx,
+                    matrix: blockCopy,
+                });         
+            }
+        }
+        
+        let piecesNeeded = nextPiecesAmount.value;
+
+        // Mischia i pezzi migliori e normali
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        shuffle(bestPieces.value);
+        shuffle(normalPieces.value);
+
+        let bestIdx = 0;
+        let normalIdx = 0;
+        
+        for (let k = 0; k < piecesNeeded; k++) {
+            // Tutti e due i tipi di pezzi disponibili
+            if (bestIdx < bestPieces.value.length && normalIdx < normalPieces.value.length) {
+                if (Math.random() < 0.5) {
+                    console.log("Adding best piece: ", bestPieces.value[bestIdx]);
+                    nextPieces.value.push(bestPieces.value[bestIdx++]);
+                } else {
+                    console.log("Adding normal piece: ", normalPieces.value[normalIdx]);
+                    nextPieces.value.push(normalPieces.value[normalIdx++]);
                 }
             }
-    
-            if (!pieceFound) {
-                // Fallback: Adjust the previous piece or generate a random one
-                const fallbackPiece = toRawArray(blocks.value[Math.floor(Math.random() * blocks.value.length)]);    
+            // Solo pezzi migliori disponibili
+            else if (bestIdx < bestPieces.value.length) {
+                console.log("Adding best piece: ", bestPieces.value[bestIdx]);
+                nextPieces.value.push(bestPieces.value[bestIdx++]);
+            }
+            // Solo pezzi normali disponibili
+            else if (normalIdx < normalPieces.value.length) {
+                console.log("Adding normal piece: ", normalPieces.value[normalIdx]);
+                nextPieces.value.push(normalPieces.value[normalIdx++]);
+            }
+            // Fallback
+            else {
+                const fallbackPiece = toRawArray(blocks.value[Math.floor(Math.random() * blocks.value.length)]);
+                console.log("Adding fallback piece: ", fallbackPiece);
                 nextPieces.value.push({
-                    pieceIdx: i,
+                    pieceIdx: Math.floor(Math.random() * blocks.value.length),
                     colorIdx: Math.floor(Math.random() * colorsCount) + 1,
                     matrix: fallbackPiece,
                 });
@@ -140,35 +185,65 @@ export const useGameStore = defineStore('game', () => {
     }
 
     function fitsInField(piece) {
+        let foundNormal = false;
         for (let i = 0; i <= rows.value - piece.length; i++) {
             for (let j = 0; j <= columns.value - piece[0].length; j++) {
                 let fits = true;
                 for (let x = 0; x < piece.length; x++) {
                     for (let y = 0; y < piece[x].length; y++) {
-                        if (piece[x][y] === 1 && field.value[i + x][j + y] !== 0) {
+                        if (piece[x][y] !== 0 && field.value[i + x][j + y] !== 0) {
                             fits = false;
                             break;
                         }
                     }
                     if (!fits) break;
                 }
-                if (fits) return true;
+                if (fits) {
+                    if (isBestPiece(piece, i, j)) {
+                        console.log('Best piece fits at ', i, j);
+                        return "bestPiece";
+                    } else {
+                        foundNormal = true;
+                    }
+                }
             }
         }
-        return false;
+        if (foundNormal) return "pieceFound";
+        return "notFound";
     }
 
-    function clearLines() {
-        console.time("clearLines");
+    function isBestPiece(piece, xCoord, yCoord) {
+        var fieldData = field.value.map(row => [...row]);
+        for (let i = 0; i < piece.length; i++) {
+            for (let j = 0; j < piece[i].length; j++) {
+                if (piece[i][j] === 1) {
+                    fieldData[xCoord + i][yCoord + j] = 1;
+                }
+            }
+        }
+        return clearLines(fieldData) === true;
+    }
+
+    function clearLines(fieldGiven) {
+        var fieldData = null;
+
+        if (!fieldGiven){ // Se non viene passato un campo, usiamo quello di gioco
+            fieldData = field.value.map(row => [...row]); //Deep copy del campo
+        }
+        else
+        { // Se viene passato un campo, usiamo quello
+            fieldData = fieldGiven
+        }
     
-        const fieldData = field.value.map(row => [...row]); //Deep copy del campo
-        const fullRows = new Set();
-        const fullCols = new Set();
-        const rowCounts = Array(rows.value).fill(0);
-        const colCounts = Array(columns.value).fill(0);
+        
+        const fullRows = new Set(); //Array che contiene gli indici delle righe piene
+        const fullCols = new Set(); //Array che contiene gli indici delle colonne piene
+        const rowCounts = Array(rows.value).fill(0); //Array che contiene il numero di celle piene per riga
+        const colCounts = Array(columns.value).fill(0); //Idem per colonne
         let cellsCount = rows.value * columns.value;
-    
-        // Una sola iterazione su tutto il campo
+        let didItRemove = false; //Ritorna true se sono state rimosse righe o colonne
+
+        //Controlla quali caselle sono piene
         for (let i = 0; i < rows.value; i++) {
             for (let j = 0; j < columns.value; j++) {
                 if (fieldData[i][j] !== 0) {
@@ -180,23 +255,30 @@ export const useGameStore = defineStore('game', () => {
     
         // Identifica righe e colonne piene
         for (let i = 0; i < rows.value; i++) {
-            if (rowCounts[i] === columns.value) fullRows.add(i);
+            if (rowCounts[i] === columns.value) {
+                fullRows.add(i);
+                didItRemove = true;
+            }
         }
         for (let j = 0; j < columns.value; j++) {
-            if (colCounts[j] === rows.value) fullCols.add(j);
+            if (colCounts[j] === rows.value) {
+                fullCols.add(j);
+                didItRemove = true;
+            }    
         }
     
         // Calcolo punti
-        let count = fullRows.size + fullCols.size;
-        points.value += count * 80;
+        if (!fieldGiven) {
+            let count = fullRows.size + fullCols.size;
+            points.value += count * 80;
     
-        if (count >= 2 && count <= 3) {
-            points.value = Math.floor(points.value * pointsMultiplier.value[0]);
-        } else if (count >= 4 && count <= 5) {
-            points.value = Math.floor(points.value * pointsMultiplier.value[1]);
-        } else if (count > 5) {
-            points.value = Math.floor(points.value * pointsMultiplier.value[2]);
-        }
+            if (count >= 2 && count <= 3) {
+                points.value = Math.floor(points.value * pointsMultiplier.value[0]);
+            } else if (count >= 4 && count <= 5) {
+                points.value = Math.floor(points.value * pointsMultiplier.value[1]);
+            } else if (count > 5) {
+                points.value = Math.floor(points.value * pointsMultiplier.value[2]);
+            }
     
         // Cancellazione
         for (const i of fullRows) {
@@ -209,10 +291,10 @@ export const useGameStore = defineStore('game', () => {
         }
 
         field.value = fieldData;
-    
-        console.timeEnd("clearLines");
 
         sendUpdatedField();
+        }
+        return didItRemove;
     }
 
     function resetGame() {
@@ -240,6 +322,19 @@ export const useGameStore = defineStore('game', () => {
         generateRandomPiecesThatFit(blockColorsNumber.value);
         reset.value = 1;
         reset.value = 0;
+    }
+
+    function checkLoss() {
+        // True se nessuno dei pezzi successivi può essere piazzato
+        for (let idx = 0; idx < nextPieces.value.length; idx++) {
+            const piece = nextPieces.value[idx]?.matrix;
+            if (!piece) continue;
+            if (fitsInField(piece) !== "notFound") {
+                return false; // Almeno un pezzo può essere piazzato
+            }
+        }
+        console.log("The player has lost the game!");
+        return true;
     }
 
     async function fetchUs() {
@@ -339,6 +434,7 @@ export const useGameStore = defineStore('game', () => {
         loginWSS,
         setOpponent,
         sendUpdatedField,
-        updateOpponentState
+        updateOpponentState,
+        checkLoss
     }
 });
