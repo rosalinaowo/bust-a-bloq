@@ -49,8 +49,8 @@ export const useGameStore = defineStore('game', () => {
     //const fieldSprites = ref([]);
     const nextPieces = ref([]);
 
-    const texturePacks = ref([ 'default', 'blockBandT' ]);
-    const selectedTexturePack = texturePacks.value[1];
+    const texturePacks = ref([ 'default', 'blockMC', 'blockBandT' ]);
+    const selectedTexturePack = texturePacks.value[0];
     const blockColorsNumber = ref(0);
     const reset = ref(0);
 
@@ -360,6 +360,25 @@ export const useGameStore = defineStore('game', () => {
         }
     }
 
+    async function register(requestedUsername, password) {
+        try {
+            const res = await mp.register(requestedUsername, password);
+            if (res) {
+                logged.value = true;
+                username.value = res.username;
+                await fetchUs();
+                console.log('Registered and logged in as: ' + res.username);
+                return res.jwt;
+            } else {
+                console.log('Registration failed');
+                return null;
+            }
+        } catch (error) {
+            console.log('Error registering: ' + error);
+            return null;
+        }
+    }
+
     function logout() {
         // mp.logout()
         //     .then((result) => {
@@ -385,12 +404,15 @@ export const useGameStore = defineStore('game', () => {
         mp.connectWSS(username.value);
     }
 
-    function setOpponent() {
-        mp.setOpponent(opponentUsername.value)
+    function setOpponent(username) {
+        return mp.setOpponent(username)
             .then((result) => {
+                opponentUsername.value = username;
                 console.log('Opponent set to: ' + opponentUsername.value);
+                return result;
             }).catch((error) => {
                 console.log('Error setting opponent: ' + error);
+                return false;
             });
     }
 
@@ -430,6 +452,7 @@ export const useGameStore = defineStore('game', () => {
         clearLines,
         resetGame,
         login,
+        register,
         logout,
         loginWSS,
         setOpponent,

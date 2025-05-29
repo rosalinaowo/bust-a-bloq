@@ -177,10 +177,14 @@ io.on('connection', (socket) => {
 // -----------------------------------------------------------
 
 app.get('/api/users/online', (req, res) => {
-    const onlineUsers = Array.from(usersBySocket.values()).map(user => ({
-        username: user.username,
-        isBusy: games.some(g => g.p1 === user.username || g.p2 === user.username)
-    }));
+    const onlineUsers = Array.from(usersBySocket.values()).map(user => {
+        const dbUser = db.users.find(u => u.username === user.username);
+        return {
+            username: user.username,
+            maxPoints: dbUser ? dbUser.maxPoints : 0,
+            isBusy: games.some(g => g.p1 === user.username || g.p2 === user.username)
+        }
+    });
     res.json(onlineUsers);
 });
 
@@ -249,8 +253,10 @@ app.post('/api/user/register', (req, res) => {
     db.users.push(newUser);
     saveData();
 
+    const token = jwt.sign({ username: newUser.username }, config.JWT_SECRET, { expiresIn: config.JWT_EXPIRATION });
+
     const { username, maxPoints } = newUser;
-    const cleanUser = { username, maxPoints };
+    const cleanUser = { jwt: token, username, maxPoints };
 
     res.status(201).json(cleanUser);
 });
@@ -271,6 +277,10 @@ app.post('/api/user/login', (req, res) => {
     const match = bcrypt.compareSync(password, user.passwordHash);
     if (!match) {
         return res.status(401).json({ message: 'Invalid password' });
+    }
+
+    if (socketByUsername.has(requestedUsername)) {
+        return res.status(409).json({ message: 'User already logged in' });
     }
 
     const token = jwt.sign({ username: user.username }, config.JWT_SECRET, { expiresIn: config.JWT_EXPIRATION });
