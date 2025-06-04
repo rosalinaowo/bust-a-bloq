@@ -31,6 +31,20 @@ export default {
         return true;
       }
       return false;
+    },
+    async register() {
+      let jwt = await this.gameStore.register(this.username, this.password);
+      if (jwt) {
+        localStorage.setItem('jwt', jwt);
+        const loginModal = Modal.getInstance(document.getElementById('loginModal'));
+        if (loginModal) {
+          loginModal.hide();
+          this.username = '';
+          this.password = '';
+        }
+        return true;
+      }
+      return false;
     }
   }
 }
@@ -84,7 +98,7 @@ export default {
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-          <button type="button" class="btn btn-primary">Register</button>
+          <button @click="register()" type="button" class="btn btn-primary">Register</button>
           <button @click="login()" type="button" class="btn btn-primary">Login</button>
         </div>
       </div>

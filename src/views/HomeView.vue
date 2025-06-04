@@ -1,9 +1,22 @@
-<script setup>
+<script>
 import { ref } from 'vue';
 import GameField from '@/components/GameField.vue';
+import PlayerList from '@/components/PlayerList.vue';
 import { useGameStore } from '@/stores/game';
 
-var gameStore = useGameStore();
+export default {
+  name: 'HomeView',
+  components: {
+    GameField,
+    PlayerList
+  },
+  data() {
+    return {
+      gameStore: useGameStore(),
+      opponentUsername: ''
+    };
+  }
+};
 </script>
 
 <template>
@@ -15,8 +28,8 @@ var gameStore = useGameStore();
       <button @click="gameStore.sendUpdatedField()">Send state</button>
       <button @click="gameStore.updateOpponentState()">Get opponent state</button>
       <br>
-      <input type="text" v-model="gameStore.opponentUsername" placeholder="Opponent username" />
-      <button @click="gameStore.setOpponent()">Connect</button>
+      <input type="text" v-model="opponentUsername" placeholder="Opponent username" />
+      <button @click="gameStore.setOpponent(opponentUsername)">Connect</button>
       <div>Game matrix:</div>
       <div v-for="(row, index) in gameStore.field" :key="index">
         {{ row }}
@@ -30,4 +43,5 @@ var gameStore = useGameStore();
       </div>
     </div>
   </div>
+  <PlayerList></PlayerList>
 </template>

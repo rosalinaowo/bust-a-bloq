@@ -125,6 +125,24 @@ export async function login(username, password) {
     return null;
 }
 
+export async function register(username, password) {
+    const response = await fetch(endpoint + '/api/user/register', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ username, password })
+    });
+
+    if (response.ok) {
+        const data = await response.json();
+        connectWSS(data.username);
+        return data;
+    }
+
+    return null;
+}
+
 export async function updateStats(stats) {
     const token = localStorage.getItem('jwt');
     const response = await fetch(endpoint + '/api/user/updateStats', {
