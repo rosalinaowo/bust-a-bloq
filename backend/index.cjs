@@ -423,5 +423,5 @@ app.get('/', (req, res) => {
 });
 
 server.listen(config.PORT, () => {
-    log(`Server is running on http://localhost:${config.PORT}`);
+    console.log(`Server is running on http://localhost:${config.PORT}`);
 });
