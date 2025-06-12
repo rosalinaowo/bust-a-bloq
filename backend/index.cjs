@@ -7,7 +7,7 @@ const Joi = require('joi');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
-const ENABLE_LOGS = process.env.ENABLE_LOGS !== false;
+const ENABLE_LOGS = process.env.ENABLE_LOGS !== 'false';
 
 function log(...args) {
     if (ENABLE_LOGS) {
