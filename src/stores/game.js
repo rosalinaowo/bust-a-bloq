@@ -56,9 +56,11 @@ export const useGameStore = defineStore('game', () => {
 
     const username = ref(isTokenValid() ? jwtDecode(localStorage.getItem('jwt')).username : "");
     const user = ref(null);
+    const challenge = ref(null);
     const opponentUsername = ref("");
     const logged = ref(isTokenValid());
     const opponent = ref(null);
+    const opponentHasLost = ref(false);
 
     if (logged.value) {
         mp.connectWSS(username.value);
@@ -280,19 +282,19 @@ export const useGameStore = defineStore('game', () => {
                 points.value = Math.floor(points.value * pointsMultiplier.value[2]);
             }
     
-        // Cancellazione
-        for (const i of fullRows) {
-            fieldData[i].fill(0);
-        }
-        for (const j of fullCols) {
-            for (let i = 0; i < rows.value; i++) {
-                fieldData[i][j] = 0;
+            // Cancellazione
+            for (const i of fullRows) {
+                fieldData[i].fill(0);
             }
-        }
+            for (const j of fullCols) {
+                for (let i = 0; i < rows.value; i++) {
+                    fieldData[i][j] = 0;
+                }
+            }
 
-        field.value = fieldData;
+            field.value = fieldData;
 
-        sendUpdatedField();
+            sendUpdatedField();
         }
         return didItRemove;
     }
@@ -318,7 +320,7 @@ export const useGameStore = defineStore('game', () => {
         points.value = 0;
         field.value = Array.from({ length: rows.value }, () => Array.from({ length: columns.value }, () => 0));
         nextPieces.value = [];
-        loadExampleGame();
+        //loadExampleGame();
         generateRandomPiecesThatFit(blockColorsNumber.value);
         reset.value = 1;
         reset.value = 0;
@@ -334,6 +336,7 @@ export const useGameStore = defineStore('game', () => {
             }
         }
         console.log("The player has lost the game!");
+        disconnectOpponent(true);
         return true;
     }
 
@@ -409,11 +412,30 @@ export const useGameStore = defineStore('game', () => {
             .then((result) => {
                 opponentUsername.value = username;
                 console.log('Opponent set to: ' + opponentUsername.value);
+                sendUpdatedField();
                 return result;
             }).catch((error) => {
                 console.log('Error setting opponent: ' + error);
-                return false;
+                return error;
             });
+    }
+
+    function disconnectOpponent(hasLost) {
+        if (opponent.value) {
+            console.log('Disconnecting opponent');
+            mp.disconnectOpponent(hasLost);
+        }
+    }
+
+    function acceptChallenge() {
+        console.log('Accepting challenge');
+        mp.answerChallenge(true);
+        sendUpdatedField();
+    }
+
+    function declineChallenge() {
+        console.log('Declining challenge');
+        mp.answerChallenge(false);
     }
 
     function sendUpdatedField() {
@@ -442,8 +464,10 @@ export const useGameStore = defineStore('game', () => {
         username,
         user,
         opponentUsername,
+        challenge,
         logged,
         opponent,
+        opponentHasLost,
         initPixiGame,
         destroyPixiGame,
         loadExampleGame,
@@ -456,6 +480,9 @@ export const useGameStore = defineStore('game', () => {
         logout,
         loginWSS,
         setOpponent,
+        disconnectOpponent,
+        acceptChallenge,
+        declineChallenge,
         sendUpdatedField,
         updateOpponentState,
         checkLoss

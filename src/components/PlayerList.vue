@@ -14,7 +14,11 @@ export default {
   methods: {
     getOnlineUsers,
     connectToOpponent(username) {
-      this.gameStore.setOpponent(username).then(() => {
+      this.gameStore.setOpponent(username).then((result) => {
+        if (result !== 'success') {
+          console.error('Failed to connect to opponent:', username);
+          return;
+        }
         console.log(`Connected to opponent: ${username}`);
       }).catch(error => {
         console.error('Error connecting to opponent:', error);

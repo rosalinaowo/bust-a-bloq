@@ -2,13 +2,15 @@
 import { ref } from 'vue';
 import GameField from '@/components/GameField.vue';
 import PlayerList from '@/components/PlayerList.vue';
+import ChallengeModal from '@/components/ChallengeModal.vue';
 import { useGameStore } from '@/stores/game';
 
 export default {
   name: 'HomeView',
   components: {
     GameField,
-    PlayerList
+    PlayerList,
+    ChallengeModal
   },
   data() {
     return {
@@ -21,6 +23,7 @@ export default {
 
 <template>
   <div class="d-flex justify-content-center">
+    <ChallengeModal v-if="gameStore.challenge" :from="gameStore.challenge.from" :timeout="gameStore.challenge.timeout" @accept="gameStore.acceptChallenge" @decline="gameStore.declineChallenge"></ChallengeModal>
     <GameField></GameField>
     <div class="ms-3">
       <div>Opponent name: {{ gameStore.opponentUsername }}</div>

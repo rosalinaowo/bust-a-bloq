@@ -1,7 +1,9 @@
 import { useGameStore } from '@/stores/game';
 import { io } from 'socket.io-client';
 
-var endpoint = 'http://localhost:3000'
+const isProd = import.meta.env.PROD;
+
+var endpoint = isProd ? '/' : 'http://localhost:3000/';
 var gameStore = null;
 export var socket;
 
@@ -41,6 +43,13 @@ export function connectWSS(username) {
         console.log('Received opponent field update');
         gameStore.opponent = data;
     });
+
+    socket.on('challengeRequest', (data) => {
+        gameStore.challenge = {
+            from: data.from,
+            timeout: data.timeout
+        }
+    });
 }
 
 export function disconnectWSS() {
@@ -50,19 +59,69 @@ export function disconnectWSS() {
     }
 }
 
+export function answerChallenge(accept) {
+    socket.emit('challengeResponse', {
+        from: gameStore.challenge.from,
+        to: gameStore.username,
+        accepted: accept
+    });
+    console.log(`Challenge response sent: ${accept ? 'Accepted' : 'Declined'}`);
+    gameStore.challenge = null;
+
+    socket.once('setOpponentStatus', (status) => {
+        if (status.message === 'success') {
+            console.log(`Opponent set: ${status.message}`);
+            socket.once('setOpponentStatus', (status) => {
+                if (status.message === 'opponentDisconnected') {
+                    console.log('Opponent disconnected');
+                    gameStore.opponent = null;
+                }
+                if (status.message === 'opponentLostDisconnect') {
+                    console.log('Opponent lost the game, you win!');
+                    gameStore.opponentHasLost = true;
+                    gameStore.opponent = null;
+                }
+            });
+        } else {
+            console.error(`Failed to set opponent: ${status.message}`);
+        }
+    });
+}
+
 export function setOpponent(username) {
     return new Promise((resolve, reject) => {
         socket.emit('setOpponent', username);
         socket.once('setOpponentStatus', (status) => {
             console.log(`Set opponent status: ${status.message}`);
-            switch (status.message) {
-                // case 'userNotFound': reject(false); break;
-                // case 'opponentNotFound': reject(false); break;
-                case 'success': resolve(true); break;
-                default: reject(false); break;
+            if (status.message === 'success') {
+                socket.once('setOpponentStatus', (status) => {
+                    if (status.message === 'opponentDisconnected') {
+                        console.log('Opponent disconnected');
+                        gameStore.opponent = null;
+                    }
+                    if (status.message === 'opponentLostDisconnect') {
+                        console.log('Opponent lost the game, you win!');
+                        gameStore.opponentHasLost = true;
+                        gameStore.opponent = null;
+                    }
+                });
+                resolve(status.message);
             }
+            else { reject(status.message); }
+            // switch (status.message) {
+            //     // case 'userNotFound': reject(false); break;
+            //     // case 'opponentNotFound': reject(false); break;
+            //     case 'success': resolve(true); break;
+            //     default: reject(false); break;
+            // }
         });
     });
+}
+
+export function disconnectOpponent(hasLost) {
+    console.log(`Disconnecting from ${gameStore.opponent.username}`);
+    socket.emit('disconnectOpponent', { hasLost: hasLost });
+    gameStore.opponent = null;
 }
 
 export function sendUpdatedField() {
@@ -86,7 +145,7 @@ export function getOpponentStatus() {
 // -----------------------------------------------------------
 
 export async function getOnlineUsers() {
-    const response = await fetch(endpoint + '/api/users/online');
+    const response = await fetch(endpoint + 'api/users/online');
 
     if (response.ok) {
         const data = await response.json();
@@ -97,7 +156,7 @@ export async function getOnlineUsers() {
 }
 
 export async function getUser(username) {
-    const response = await fetch(endpoint + `/api/user?username=${username}`);
+    const response = await fetch(endpoint + `api/user?username=${username}`);
 
     if (response.ok) {
         const data = await response.json();
@@ -108,7 +167,7 @@ export async function getUser(username) {
 }
 
 export async function login(username, password) {
-    const response = await fetch(endpoint + '/api/user/login', {
+    const response = await fetch(endpoint + 'api/user/login', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -126,7 +185,7 @@ export async function login(username, password) {
 }
 
 export async function register(username, password) {
-    const response = await fetch(endpoint + '/api/user/register', {
+    const response = await fetch(endpoint + 'api/user/register', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -145,7 +204,7 @@ export async function register(username, password) {
 
 export async function updateStats(stats) {
     const token = localStorage.getItem('jwt');
-    const response = await fetch(endpoint + '/api/user/updateStats', {
+    const response = await fetch(endpoint + 'api/user/updateStats', {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
@@ -162,7 +221,7 @@ export async function updateStats(stats) {
 
 // export async function logout() {
 //     const token = localStorage.getItem('jwt');
-//     const response = await fetch(endpoint + '/api/user/logout', {
+//     const response = await fetch(endpoint + 'api/user/logout', {
 //         method: 'POST',
 //         headers: {
 //             'Content-Type': 'application/json',
@@ -180,7 +239,7 @@ export async function updateStats(stats) {
 
 export async function renewLogin() {
     const token = localStorage.getItem('jwt');
-    const response = await fetch(endpoint + '/api/user/renewLogin', {
+    const response = await fetch(endpoint + 'api/user/renewLogin', {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',
@@ -229,7 +288,7 @@ export async function startLoginRenewalTimer() {
 
 /*
 const token = localStorage.getItem('jwt');
-fetch('/api/update', {
+fetch('api/update', {
   method: 'PUT',
   headers: {
     'Content-Type': 'application/json',

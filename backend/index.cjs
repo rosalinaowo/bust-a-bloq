@@ -32,6 +32,8 @@ const config = getConfig();
 var db = {};
 const saltRounds = 10;
 
+const challengeTime = 10 * 1000; // 10 seconds
+
 function getConfig() {
     if (!fs.existsSync(confPath)) {
         console.error(`Config file not found at ${confPath}`);
@@ -131,10 +133,12 @@ io.on('connection', (socket) => {
         
         if (opponentSocketId) {
             console.log('Sending field update to opponent ' + opponentSocketId);
+            console.log('Has lost: ' + data.hasLost);
             io.to(opponentSocketId).emit('opponentUpdateField', {
                 username: opponentUsername,
                 points: data.points,
-                field: data.field
+                field: data.field,
+                hasLost: data.hasLost
             });
         }
     });
@@ -144,6 +148,7 @@ io.on('connection', (socket) => {
             socket.emit('setOpponentStatus', {
                 message: 'userNotFound'
             });
+            return;
         }
         games.forEach((game) => {
             if (game.p1 === username || game.p2 === username) {
@@ -154,11 +159,66 @@ io.on('connection', (socket) => {
             }
         });
 
-        addGame(usersBySocket.get(socket.id).username, username);
-        console.log(`[G] ${usersBySocket.get(socket.id).username} (${socket.id}) set opponent to ${username}`);
-        socket.emit('setOpponentStatus', {
-            message: 'success'
+        const challenger = usersBySocket.get(socket.id).username;
+        const opponentSocketId = socketByUsername.get(username);
+        
+        io.to(opponentSocketId).emit('challengeRequest', {
+            from: challenger,
+            timeout: challengeTime
         });
+        console.log(`[G?] ${challenger} (${socket.id}) challenged ${username} (${opponentSocketId})`);
+
+        let responseReceived = false;
+        const timeout = setTimeout(() => {
+            if (!responseReceived) {
+                socket.emit('setOpponentStatus', {
+                    message: 'userTimeout'
+                });
+            }
+        }, challengeTime);
+
+        const opponentSocket = io.sockets.sockets.get(opponentSocketId);
+
+        function onChallengeResponse(data) {
+            console.log(`[G!] Challenge response from ${data.from} to ${data.to}: ${data.accepted}`);
+            if (data.from === challenger && data.to === username) {
+                responseReceived = true;
+                clearTimeout(timeout);
+                if (data.accepted) {
+                    addGame(challenger, username);
+                    socket.emit('setOpponentStatus', { message: 'success' });
+                    io.to(opponentSocketId).emit('setOpponentStatus', { message: 'success' });
+                } else {
+                    socket.emit('setOpponentStatus', { message: 'userRejected' });
+                }
+                opponentSocket.off('challengeResponse', onChallengeResponse); // Remove the listener
+            }
+        }
+        opponentSocket.on('challengeResponse', onChallengeResponse);
+
+        // addGame(usersBySocket.get(socket.id).username, username);
+        // console.log(`[G] ${usersBySocket.get(socket.id).username} (${socket.id}) set opponent to ${username}`);
+        // socket.emit('setOpponentStatus', {
+        //     message: 'success'
+        // });
+    });
+
+    socket.on('disconnectOpponent', (data) => {
+        const user = usersBySocket.get(socket.id);
+        if (!user) return;
+
+        const opponentUsername = getOpponent(user.username);
+        if (!opponentUsername) return;
+
+        const opponentSocketId = socketByUsername.get(opponentUsername);
+        if (opponentSocketId) {
+            io.to(opponentSocketId).emit('setOpponentStatus', {
+                message: data.hasLost ? 'opponentLostDisconnect' : 'opponentDisconnected'
+            });
+            console.log(`[G] ${user.username} (${socket.id}) disconnected from ${opponentUsername} (${opponentSocketId})`);
+        }
+
+        removeGame(user.username);
     });
 
     socket.on('getOpponentState', () => {

@@ -2,6 +2,9 @@ import { Application, Assets, Container, Graphics, Sprite, Text, TextStyle, SCAL
 import { useGameStore } from "@/stores/game";
 import { toRaw, watch } from "vue";
 
+const isProd = import.meta.env.PROD;
+const ASSET_BASE_PATH = isProd ? '/assets' : '/src/assets';
+
 export class PixiGame {
     constructor(htmlContainer) {
         this.gameStore = useGameStore();
@@ -19,7 +22,7 @@ export class PixiGame {
         this.NEXT_PIECES_Y = this.FIELD_Y + this.FIELD_BORDER_HEIGHT;
         this.NEXT_PIECES_DISTANCE = 20;
 
-        this.BLOCK_TEXTURE_BASE_PATH = `/src/assets/textures/${this.gameStore.selectedTexturePack}/`;
+        this.BLOCK_TEXTURE_BASE_PATH = `${ASSET_BASE_PATH}/textures/${this.gameStore.selectedTexturePack}/`;
         this.BLOCK_COLORS_NUMBER = 7;
         this.BLOCK_TEXTURE_PATHS = Array.from({ length: this.BLOCK_COLORS_NUMBER }, (_, i) => `${this.BLOCK_TEXTURE_BASE_PATH}block${i + 1}.png`);
         this.BLOCK_SIDE = 50;
@@ -144,24 +147,37 @@ export class PixiGame {
 
         this.app.stage.addChild(pointsText);
 
-        const resetButton = this.getResetButton();
-        resetButton.x = pointsText.x;
-        resetButton.y = pointsText.y + pointsText.height + 5;
-        this.app.stage.addChild(resetButton);
+        this.resetButton = this.getResetButton();
+        this.resetButton.x = pointsText.x;
+        this.resetButton.y = pointsText.y + pointsText.height + 5;
+        this.app.stage.addChild(this.resetButton);
+
+        this.disconnectButton = this.getDisconnectButton();
+        this.disconnectButton.x = pointsText.x;
+        this.disconnectButton.y = this.resetButton.y + this.resetButton.height + 5;
+        this.disconnectButton.visible = false;
+        this.app.stage.addChild(this.disconnectButton);
 
         watch(() => this.gameStore.points, (newPoints) => {
             pointsText.text = `Points: ${newPoints}`;
         });
 
         watch(() => this.gameStore.opponent, (opponent) => {
-            if (opponent) {
-                this.updateOpponentView();
+            this.updateOpponentView();
+            // if (this.gameStore.opponent && this.gameStore.opponent.hasLost) {
+            //     this.showPopup(false);
+            // }
+        });
+
+        watch(() => this.gameStore.opponentHasLost, (hasLost) => {
+            if (hasLost) {
+                this.showPopup(false);
             }
         });
 
         this.fieldContainer = undefined;
         this.nextPiecesContainer = undefined;
-        this.opponentFieldContainer = undefined;
+        this.opponentContainer = undefined;
 
         this.updateView();
     }
@@ -186,12 +202,35 @@ export class PixiGame {
     }
 
     updateOpponentView() {
-        this.app.stage.removeChild(this.opponentFieldContainer);
-        this.opponentFieldContainer = this.getFieldContainer(1);
-        this.opponentFieldContainer.scale = 0.4;
-        this.opponentFieldContainer.x = 0;
-        this.opponentFieldContainer.y = 100;
-        this.app.stage.addChild(this.opponentFieldContainer);
+        this.app.stage.removeChild(this.opponentContainer);
+        this.resetButton.eventMode = 'none';
+        if (!this.gameStore.opponent) {
+            this.resetButton.eventMode = 'static';
+            this.disconnectButton.visible = false;
+            return;
+        }
+
+        this.disconnectButton.visible = true;
+
+        const textStyle = new TextStyle({
+            fontFamily: 'Arial',
+            fontSize: 22,
+            fill: 0xffffff
+        });
+        const usernameText = new Text({ text: `${this.gameStore.opponent.username} (Points: ${this.gameStore.opponent.points})`, style: textStyle });
+
+        this.opponentContainer = new Container();
+        this.opponentContainer.x = 5;
+        this.opponentContainer.y = 150;
+        this.opponentContainer.addChild(usernameText);
+
+        const opFieldContainer = this.getFieldContainer(1);
+        opFieldContainer.scale = 0.4;
+        opFieldContainer.x = 0;
+        opFieldContainer.y = 30;
+        this.opponentContainer.addChild(opFieldContainer);
+
+        this.app.stage.addChild(this.opponentContainer);
     }
 
     getResetButton() {
@@ -208,22 +247,59 @@ export class PixiGame {
             //     join: 'round'
             // }
         });
-        const resetText = new Text({ text: 'Reset', style: textStyle });
-        resetText.eventMode = 'none';
+        const text = new Text({ text: 'Reset', style: textStyle });
+        text.eventMode = 'none';
 
-        rectangle.roundRect(0, 0, resetText.width + 15, resetText.height + 10, 5);
+        rectangle.roundRect(0, 0, text.width + 15, text.height + 10, 5);
         rectangle.fill({ color: 0xbb2d3b });
 
-        resetText.x = rectangle.width / 2 - resetText.width / 2;
-        resetText.y = rectangle.height / 2 - resetText.height / 2;
+        text.x = rectangle.width / 2 - text.width / 2;
+        text.y = rectangle.height / 2 - text.height / 2;
         
         container.addChild(rectangle);
-        container.addChild(resetText);
+        container.addChild(text);
 
         rectangle.eventMode = 'static';
         rectangle.cursor = 'pointer';
         rectangle.on('pointerdown', () => {
+            this.gameStore.disconnectOpponent();
             this.gameStore.resetGame();
+            this.updateView();
+        });
+
+        return container;
+    }
+
+    getDisconnectButton() {
+        const rectangle = new Graphics();
+        const container = new Container();
+
+        const textStyle = new TextStyle({
+            fontFamily: 'Arial',
+            fontSize: 24,
+            fill: 0xffffff,
+            // stroke: {
+            //     color: 0xff5d35,
+            //     width: 4,
+            //     join: 'round'
+            // }
+        });
+        const text = new Text({ text: 'Disconnect', style: textStyle });
+        text.eventMode = 'none';
+
+        rectangle.roundRect(0, 0, text.width + 15, text.height + 10, 5);
+        rectangle.fill({ color: 0xbb2d3b });
+
+        text.x = rectangle.width / 2 - text.width / 2;
+        text.y = rectangle.height / 2 - text.height / 2;
+        
+        container.addChild(rectangle);
+        container.addChild(text);
+
+        rectangle.eventMode = 'static';
+        rectangle.cursor = 'pointer';
+        rectangle.on('pointerdown', () => {
+            this.gameStore.disconnectOpponent();
             this.updateView();
         });
 
@@ -280,6 +356,82 @@ export class PixiGame {
         }
 
         return container;
+    }
+
+    showPopup(hasLost) {
+        // Remove existing popup if present
+        if (this.lossPopup) {
+            this.app.stage.removeChild(this.lossPopup);
+            this.lossPopup = null;
+        }
+
+        const popup = new Container();
+        popup.zIndex = 1000;
+
+        // --- FULLSCREEN OVERLAY ---
+        const overlay = new Graphics();
+        overlay.rect(0, 0, this.WIDTH, this.HEIGHT);
+        overlay.fill({ color: 0x000000, alpha: 0.4 }); // semi-transparent black
+        overlay.eventMode = 'static'; // blocks pointer events
+        overlay.cursor = 'default';
+        popup.addChild(overlay);
+
+        // --- POPUP CONTENT ---
+
+        // Background rectangle (centered)
+        const bgWidth = 300;
+        const bgHeight = 150;
+        const bg = new Graphics();
+        bg.roundRect(0, 0, bgWidth, bgHeight, 20);
+        bg.fill({ color: 0x222244, alpha: 0.95 });
+        bg.x = this.CENTER_X - bgWidth / 2;
+        bg.y = this.CENTER_Y - bgHeight / 2;
+        popup.addChild(bg);
+
+        // "You lost!" text (centered in bg)
+        const textStyle = new TextStyle({
+            fontFamily: 'Arial',
+            fontSize: 32,
+            fill: 0xffffff,
+            fontWeight: 'bold'
+        });
+        const text = new Text({ text: hasLost ? 'You lost!' : 'You won!', style: textStyle });
+        text.x = bg.x + bgWidth / 2 - text.width / 2;
+        text.y = bg.y + 30;
+        popup.addChild(text);
+
+        // "OK" button (centered in bg)
+        const buttonWidth = 100;
+        const buttonHeight = 40;
+        const button = new Graphics();
+        button.roundRect(0, 0, buttonWidth, buttonHeight, 10);
+        button.fill({ color: hasLost ?  0xbb2d3b : 0x2bbd3b }); // red for loss, green for win
+        button.x = bg.x + bgWidth / 2 - buttonWidth / 2;
+        button.y = bg.y + 90;
+        button.eventMode = 'static';
+        button.cursor = 'pointer';
+        button.on('pointerdown', () => {
+            this.app.stage.removeChild(popup);
+            this.lossPopup = null;
+            this.gameStore.resetGame();
+            this.updateView();
+            this.gameStore.opponentHasLost = false;
+        });
+
+        const buttonText = new Text({ text: 'OK', style: { fontSize: 22, fill: 0xffffff } });
+        buttonText.eventMode = 'none';
+        buttonText.x = button.width / 2 - buttonText.width / 2;
+        buttonText.y = button.height / 2 - buttonText.height / 2;
+        button.addChild(buttonText);
+
+        popup.addChild(button);
+
+        // Set popup position to (0, 0)
+        popup.x = 0;
+        popup.y = 0;
+
+        this.app.stage.addChild(popup);
+        this.lossPopup = popup;
     }
 
     checkIfPieceFits(pieceContainer, gridX, gridY) {
@@ -356,11 +508,12 @@ export class PixiGame {
         this.app.stage.off('pointermove', this.onDragMove);
         this.dragTarget = null;
 
-        if (this.gameStore.checkLoss() == true) {
+        if (this.gameStore.checkLoss()) {
             console.log('Hai perso!');
-            alert('Hai perso! Riprova!');
-            this.gameStore.resetGame();
-            this.updateView();
+            //alert('Hai perso! Riprova!');
+            //this.gameStore.resetGame();
+            //this.updateView();
+            this.showPopup(true);
         }
         
     }
