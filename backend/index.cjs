@@ -7,6 +7,14 @@ const Joi = require('joi');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
+const ENABLE_LOGS = process.env.ENABLE_LOGS !== false;
+
+function log(...args) {
+    if (ENABLE_LOGS) {
+        console.log(...args);
+    }
+}
+
 const userSchema = Joi.object({
     username: Joi.string().alphanum().min(1).max(30).required(),
     passwordHash: Joi.string().required(),
@@ -87,7 +95,7 @@ function getOpponent(username) {
 // -----------------------------------------------------------
 
 io.on('connection', (socket) => {
-    console.log(`[C] ${socket.id}`);
+    log(`[C] ${socket.id}`);
 
     socket.on('login', (user) => {
         if (!user.username || user.username.length < 1 || user.username.trim().length < 1) {
@@ -110,7 +118,7 @@ io.on('connection', (socket) => {
         socket.emit('loginStatus', {
             message: 'success'
         });
-        console.log(`[+] ${user.username} (${socket.id})`);
+        log(`[+] ${user.username} (${socket.id})`);
     });
 
     socket.on('disconnect', () => {
@@ -118,9 +126,9 @@ io.on('connection', (socket) => {
         if (user) {
             let removedGame = removeGame(user.username);
             if (removedGame !== null) {
-                console.log(`[G] ${user.username} (${socket.id}) left the game`);
+                log(`[G] ${user.username} (${socket.id}) left the game`);
             }
-            console.log(`[-] ${user.username} (${socket.id})`);
+            log(`[-] ${user.username} (${socket.id})`);
             socketByUsername.delete(user.username);
             usersBySocket.delete(socket.id);
         }
@@ -129,11 +137,11 @@ io.on('connection', (socket) => {
     socket.on('updateField', (data) => {
         const opponentUsername = getOpponent(usersBySocket.get(socket.id).username);
         const opponentSocketId = socketByUsername.get(opponentUsername);
-        console.log(`[U] Points: ${data.points} Field: ${data.field}`);
+        log(`[U] Points: ${data.points} Field: ${data.field}`);
         
         if (opponentSocketId) {
-            console.log('Sending field update to opponent ' + opponentSocketId);
-            console.log('Has lost: ' + data.hasLost);
+            log('Sending field update to opponent ' + opponentSocketId);
+            log('Has lost: ' + data.hasLost);
             io.to(opponentSocketId).emit('opponentUpdateField', {
                 username: opponentUsername,
                 points: data.points,
@@ -166,7 +174,7 @@ io.on('connection', (socket) => {
             from: challenger,
             timeout: challengeTime
         });
-        console.log(`[G?] ${challenger} (${socket.id}) challenged ${username} (${opponentSocketId})`);
+        log(`[G?] ${challenger} (${socket.id}) challenged ${username} (${opponentSocketId})`);
 
         let responseReceived = false;
         const timeout = setTimeout(() => {
@@ -180,7 +188,7 @@ io.on('connection', (socket) => {
         const opponentSocket = io.sockets.sockets.get(opponentSocketId);
 
         function onChallengeResponse(data) {
-            console.log(`[G!] Challenge response from ${data.from} to ${data.to}: ${data.accepted}`);
+            log(`[G!] Challenge response from ${data.from} to ${data.to}: ${data.accepted}`);
             if (data.from === challenger && data.to === username) {
                 responseReceived = true;
                 clearTimeout(timeout);
@@ -197,7 +205,7 @@ io.on('connection', (socket) => {
         opponentSocket.on('challengeResponse', onChallengeResponse);
 
         // addGame(usersBySocket.get(socket.id).username, username);
-        // console.log(`[G] ${usersBySocket.get(socket.id).username} (${socket.id}) set opponent to ${username}`);
+        // log(`[G] ${usersBySocket.get(socket.id).username} (${socket.id}) set opponent to ${username}`);
         // socket.emit('setOpponentStatus', {
         //     message: 'success'
         // });
@@ -215,7 +223,7 @@ io.on('connection', (socket) => {
             io.to(opponentSocketId).emit('setOpponentStatus', {
                 message: data.hasLost ? 'opponentLostDisconnect' : 'opponentDisconnected'
             });
-            console.log(`[G] ${user.username} (${socket.id}) disconnected from ${opponentUsername} (${opponentSocketId})`);
+            log(`[G] ${user.username} (${socket.id}) disconnected from ${opponentUsername} (${opponentSocketId})`);
         }
 
         removeGame(user.username);
@@ -223,7 +231,7 @@ io.on('connection', (socket) => {
 
     socket.on('getOpponentState', () => {
         const user = usersBySocket.get(socket.id);
-        console.log(`[G] ${user.username} (${socket.id}) requested opponent state`);
+        log(`[G] ${user.username} (${socket.id}) requested opponent state`);
         socket.emit('opponentState', {
             username: 'testUser',
             points: 1000,
@@ -323,7 +331,7 @@ app.post('/api/user/register', (req, res) => {
 
 app.post('/api/user/login', (req, res) => {
     const { username: requestedUsername, password } = req.body;
-    console.log(`[L?] ${requestedUsername}`);
+    log(`[L?] ${requestedUsername}`);
 
     if (!requestedUsername) {
         return res.status(400).json({ message: 'Username is required' });
@@ -347,7 +355,7 @@ app.post('/api/user/login', (req, res) => {
     const { username, maxPoints } = user || {};
     const cleanUser = { jwt: token, username, maxPoints };
 
-    console.log(`[L+] ${requestedUsername}`);
+    log(`[L+] ${requestedUsername}`);
 
     res.json(cleanUser);
 });
@@ -380,7 +388,7 @@ app.put('/api/user/updateStats', (req, res) => {
     try {
         const decoded = jwt.verify(token, config.JWT_SECRET);
         if (newStats.username !== decoded.username) {
-            console.log(`[F] ${decoded.username} tried to update ${newStats.username}'s stats with token ${token}`);
+            log(`[F] ${decoded.username} tried to update ${newStats.username}'s stats with token ${token}`);
             return res.status(403).json({ message: 'Forbidden' });
         }
     } catch (err) {
@@ -393,7 +401,7 @@ app.put('/api/user/updateStats', (req, res) => {
 
     const { error, value } = userUpdateSchema.validate(updatedFields);
     if (error) {
-        console.log(`[F] tried to update stats with invalid data: ${error.details[0].message}`);
+        log(`[F] tried to update stats with invalid data: ${error.details[0].message}`);
         return res.status(400).json({ message: error.details[0].message });
     }
     
@@ -415,5 +423,5 @@ app.get('/', (req, res) => {
 });
 
 server.listen(config.PORT, () => {
-    console.log(`Server is running on http://localhost:${config.PORT}`);
+    log(`Server is running on http://localhost:${config.PORT}`);
 });
