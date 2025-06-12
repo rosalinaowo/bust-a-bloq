@@ -43,5 +43,5 @@ export default {
       </div>
     </div>
   </div>
-  <PlayerList></PlayerList>
+  <PlayerList v-if="gameStore.logged"></PlayerList>
 </template>
