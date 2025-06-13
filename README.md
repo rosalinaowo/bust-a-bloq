@@ -2,6 +2,8 @@
 
 Reverse engineering del famoso gioco per telefono Block Blast, con aggiunta di interessanti feature.
 
+Il progetto è anche accessibile nel browser all'indirizzo https://bustabloq.luma.wtf/
+
 ### Documentazione in [DOCS.md](./docs/DOCS.md)
 
 ## Recommended IDE Setup
