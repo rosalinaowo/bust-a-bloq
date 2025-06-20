@@ -21,6 +21,7 @@ const exampleGame = {
 
 // Creaiamo ed esportiamo uno store, lo usamio per gestire lo stato dell'app
 export const useGameStore = defineStore('game', () => {
+    const debugMode = ref(false);
     var pixiGame = ref(null);
     const blocks = ref([
         [[1, 1]], // 2x1
@@ -450,6 +451,7 @@ export const useGameStore = defineStore('game', () => {
     }
 
     return {
+        debugMode,
         pixiGame,
         texturePacks,
         selectedTexturePack,

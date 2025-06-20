@@ -25,7 +25,7 @@ export default {
   <div class="d-flex justify-content-center">
     <ChallengeModal v-if="gameStore.challenge" :from="gameStore.challenge.from" :timeout="gameStore.challenge.timeout" @accept="gameStore.acceptChallenge" @decline="gameStore.declineChallenge"></ChallengeModal>
     <GameField></GameField>
-    <div class="ms-3">
+    <div class="ms-3" v-if="gameStore.debugMode">
       <div>Opponent name: {{ gameStore.opponentUsername }}</div>
       <button @click="gameStore.loginWSS()">Login WSS</button>
       <button @click="gameStore.sendUpdatedField()">Send state</button>

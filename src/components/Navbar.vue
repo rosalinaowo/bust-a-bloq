@@ -64,6 +64,10 @@ export default {
           <RouterLink class="nav-link active" aria-current="page" to="/">Home</RouterLink>
           <RouterLink class="nav-link" to="/about">About</RouterLink>
         </div>
+        <div class="form-check form-switch mb-0 ms-1">
+          <input class="form-check-input" type="checkbox" role="switch" id="switchDebugMode" v-model="gameStore.debugMode">
+          <label class="form-check-label" for="switchDebugMode">Debug mode</label>
+        </div>
       </div>
       <div class="navbar-text">
         <a v-if="!gameStore.logged" class="me-3" style="text-decoration: none;" href="#" data-bs-toggle="modal" data-bs-target="#loginModal">Login/Register</a>
