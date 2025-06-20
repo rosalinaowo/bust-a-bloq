@@ -135,15 +135,16 @@ io.on('connection', (socket) => {
     });
 
     socket.on('updateField', (data) => {
+        const username = usersBySocket.get(socket.id).username;
         const opponentUsername = getOpponent(usersBySocket.get(socket.id).username);
         const opponentSocketId = socketByUsername.get(opponentUsername);
-        log(`[U] Points: ${data.points} Field: ${data.field}`);
+        log(`[U] ${username} -> Points: ${data.points} Field: ${data.field}`);
         
         if (opponentSocketId) {
             log('Sending field update to opponent ' + opponentSocketId);
             log('Has lost: ' + data.hasLost);
             io.to(opponentSocketId).emit('opponentUpdateField', {
-                username: opponentUsername,
+                username: username,
                 points: data.points,
                 field: data.field,
                 hasLost: data.hasLost
